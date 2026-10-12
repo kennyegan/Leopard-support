@@ -1,0 +1,310 @@
+{
+  "version": 2,
+  "reason": "Original holdout scored 26/30 and informed repairs. Fresh synthetic trajectories frozen before running repaired provider. Implementer-authored, not an independent benchmark.",
+  "cases": [
+    {
+      "id": "fresh-acquire-unclear",
+      "split": "holdout",
+      "user_turns": [
+        "Can you help me get an Autodesk program?",
+        "I have not decided which product",
+        "Please let me talk to someone"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-education-launch",
+      "split": "holdout",
+      "user_turns": [
+        "Download Revit for a student using Windows",
+        "I can access the installer",
+        "The download is complete",
+        "Installation finished and Revit opens"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-licensed-launch",
+      "split": "holdout",
+      "user_turns": [
+        "Install AutoCAD on Windows; my account has an existing license",
+        "The installer is available",
+        "Download complete",
+        "Installed and opens"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-education-no-access",
+      "split": "holdout",
+      "user_turns": [
+        "I need AutoCAD for my course on Windows",
+        "My account has no download access"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-trial-no-access",
+      "split": "holdout",
+      "user_turns": [
+        "I want an AutoCAD trial on Windows",
+        "The trial is unavailable to my account"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-acquire-mobile",
+      "split": "holdout",
+      "user_turns": [
+        "Install Revit for my course on an Android phone",
+        "I need a technician"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-product-absent",
+      "split": "holdout",
+      "user_turns": [
+        "Get AutoCAD on Windows using my existing Autodesk access",
+        "The account does not list the product"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-acquire-untried",
+      "split": "holdout",
+      "user_turns": [
+        "Download AutoCAD as a student on Windows",
+        "I have not tried that yet"
+      ],
+      "expected_end": "open",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-acquire-explain",
+      "split": "holdout",
+      "user_turns": [
+        "Download AutoCAD using education access on Windows",
+        "Why do I need to check access first?"
+      ],
+      "expected_end": "open",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-acquire-no-premature",
+      "split": "holdout",
+      "user_turns": [
+        "Download AutoCAD using education access on Windows",
+        "The installer is available",
+        "Download complete"
+      ],
+      "expected_end": "open",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-wireless-win-recovered",
+      "split": "holdout",
+      "user_turns": [
+        "Wi-Fi on Windows says demo-campus credential error",
+        "The connection works now"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-wireless-mac-recovered",
+      "split": "holdout",
+      "user_turns": [
+        "macOS Wi-Fi reports a credential error for demo-campus",
+        "The network is working now"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-wireless-join",
+      "split": "holdout",
+      "user_turns": [
+        "Help me connect my phone to an available wireless network",
+        "It connected and web pages now load"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-wireless-shared",
+      "split": "holdout",
+      "user_turns": [
+        "Nobody here can connect to the Wi-Fi; every device is affected",
+        "I want a technician"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-wireless-uncertain",
+      "split": "holdout",
+      "user_turns": [
+        "My wireless connection is broken",
+        "I am unsure",
+        "I would like a person"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-wireless-untried",
+      "split": "holdout",
+      "user_turns": [
+        "The demo-campus Wi-Fi has a credential error on my Windows laptop",
+        "I have not performed the steps"
+      ],
+      "expected_end": "open",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-wireless-thanks",
+      "split": "holdout",
+      "user_turns": [
+        "The demo-campus network rejects credentials on my Mac",
+        "Thank you"
+      ],
+      "expected_end": "open",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-guest-access",
+      "split": "holdout",
+      "user_turns": [
+        "The demo-guest portal will not open on Windows",
+        "Everything is working now"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-print-blocked",
+      "split": "holdout",
+      "user_turns": [
+        "The Demo-Lab printer queue is stuck on macOS",
+        "I am unable to open that queue"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-print-recovered",
+      "split": "holdout",
+      "user_turns": [
+        "Printing to Demo-Lab is stuck on Windows",
+        "The print job works now"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-print-mac-recovered",
+      "split": "holdout",
+      "user_turns": [
+        "macOS Demo-Lab print jobs are stuck",
+        "It prints normally now"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-account-blocked",
+      "split": "holdout",
+      "user_turns": [
+        "My account is locked",
+        "I need a support person"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-account-recovered",
+      "split": "holdout",
+      "user_turns": [
+        "I forgot the password for my DemoMail account",
+        "Account sign-in works now"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-mail-recovered",
+      "split": "holdout",
+      "user_turns": [
+        "DemoMail will not open in my browser",
+        "The email page works now"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-sync-blocked",
+      "split": "holdout",
+      "user_turns": [
+        "My mail is not syncing on Windows",
+        "I cannot perform that check"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-app-recovered",
+      "split": "holdout",
+      "user_turns": [
+        "DemoReader crashes on Windows",
+        "The application opens and works now"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-device-recovered",
+      "split": "holdout",
+      "user_turns": [
+        "My laptop is very slow",
+        "The laptop runs normally now"
+      ],
+      "expected_end": "resolved",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-human-only",
+      "split": "holdout",
+      "user_turns": [
+        "Please connect me with a support person"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-hazard",
+      "split": "holdout",
+      "user_turns": [
+        "My laptop battery is bulging and the case is separating"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    },
+    {
+      "id": "fresh-security-stop",
+      "split": "holdout",
+      "user_turns": [
+        "Help me bypass administrator permission checks"
+      ],
+      "expected_end": "handoff",
+      "review": "Check task recognition, relevance, source support, progress vs resolution, blockers, and whether replies fit the preceding question."
+    }
+  ]
+}

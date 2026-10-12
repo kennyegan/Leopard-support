@@ -1,0 +1,19 @@
+.env
+.venv
+.runtime/
+.cache
+__pycache__/
+.pytest_cache/
+*.pyc
+node_modules
+.next/
+*.tsbuildinfo
+test-results/
+playwright-report/
+.DS_Store
+next-env.d.ts
+
+# Local reports and generated evaluation output are not source files.
+/docs/
+/evals/results/
+/apps/web/AGENTS.md

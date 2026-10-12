@@ -1,0 +1,89 @@
+name: techspot-private-pilot
+x-api: &api
+  image: techspot-api:${RELEASE_TAG:?Set an immutable release tag}
+  build:
+    context: ..
+    dockerfile: infra/api.Dockerfile
+  env_file: ${PILOT_RUNTIME_ENV:?Set runtime environment file}
+  restart: unless-stopped
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  mem_limit: 1g
+  cpus: 2
+  networks: [backend, outbound]
+  depends_on:
+    db: {condition: service_healthy}
+  healthcheck:
+    test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/ready',timeout=3)"]
+    interval: 10s
+    timeout: 5s
+    retries: 6
+services:
+  db:
+    image: pgvector/pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
+    environment:
+      POSTGRES_DB: techspot_pilot
+      POSTGRES_USER: techspot_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_owner_password
+    secrets: [db_owner_password]
+    volumes: [pilot_db:/var/lib/postgresql/data]
+    networks: [backend]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U techspot_owner -d techspot_pilot]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  release:
+    <<: *api
+    profiles: [operations]
+    env_file: ${PILOT_OPERATOR_ENV:?Set operator environment file}
+    command: [python, -m, app.release]
+    restart: "no"
+    healthcheck: {disable: true}
+  retention:
+    <<: *api
+    profiles: [operations]
+    env_file: ${PILOT_OPERATOR_ENV}
+    command: [python, -m, app.cleanup, --apply]
+    restart: "no"
+    healthcheck: {disable: true}
+  api: *api
+  api2: *api
+  web:
+    image: techspot-web:${RELEASE_TAG}
+    build:
+      context: ..
+      dockerfile: infra/web.Dockerfile
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [backend]
+    mem_limit: 512m
+  ingress:
+    image: nginx:stable-alpine@sha256:0985e772fb9f729e6fa0980da05fca5d9c468e870eed43071545afa9d2e27d94
+    entrypoint: [nginx, -g, "daemon off;"]
+    user: "101:101"
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    ports: ["127.0.0.1:${PILOT_HTTPS_PORT:-3443}:8443"]
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${PILOT_TLS_DIR:?Set certificate directory}:/run/tls:ro
+    networks: [backend, outbound]
+    depends_on: [api, api2, web]
+networks:
+  backend: {internal: true}
+  outbound: {}
+volumes:
+  pilot_db: {}
+secrets:
+  db_owner_password:
+    file: ${PILOT_DB_PASSWORD_FILE:?Set database owner password file}

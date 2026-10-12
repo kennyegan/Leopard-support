@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "selected_before_first_live_holdout": true,
+  "total_trials": 3,
+  "reason": "Access denial, missing details, shared failure, correction, crash context, uncertainty, untried action, injection and explanation. Short cases retain room for recovery within the authorized attempt cap.",
+  "case_ids": [
+    "autodesk-denied",
+    "autodesk-unknown",
+    "wifi-shared",
+    "wifi-correction",
+    "app-crash",
+    "held-no-access",
+    "held-network-uncertain",
+    "held-not-tried",
+    "held-injection",
+    "held-explain-field"
+  ]
+}

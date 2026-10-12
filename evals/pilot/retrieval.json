@@ -1,0 +1,272 @@
+[
+  {
+    "id": "R01",
+    "split": "development",
+    "query": "Install AutoCAD with Autodesk education access",
+    "category": "software",
+    "request_type": "install",
+    "details": {
+      "vendor": "Autodesk",
+      "system_or_app": "AutoCAD",
+      "license_route": "education",
+      "os": "Windows"
+    },
+    "relevant": [
+      "autodesk-education"
+    ]
+  },
+  {
+    "id": "R02",
+    "split": "development",
+    "query": "Revit download through my existing Autodesk account",
+    "category": "software",
+    "request_type": "install",
+    "details": {
+      "vendor": "Autodesk",
+      "system_or_app": "Revit",
+      "license_route": "existing"
+    },
+    "relevant": [
+      "autodesk-existing"
+    ]
+  },
+  {
+    "id": "R03",
+    "split": "development",
+    "query": "Fusion trial download",
+    "category": "software",
+    "request_type": "install",
+    "details": {
+      "vendor": "Autodesk",
+      "system_or_app": "Fusion",
+      "license_route": "trial"
+    },
+    "relevant": [
+      "autodesk-trial"
+    ]
+  },
+  {
+    "id": "R04",
+    "split": "development",
+    "query": "demo-campus credential error on Windows",
+    "category": "wifi_network",
+    "request_type": "troubleshoot",
+    "details": {
+      "os": "Windows",
+      "network": "demo-campus"
+    },
+    "relevant": [
+      "wifi-win",
+      "wifi-win-alternate"
+    ]
+  },
+  {
+    "id": "R05",
+    "split": "development",
+    "query": "demo-campus credential error on macOS",
+    "category": "wifi_network",
+    "request_type": "troubleshoot",
+    "details": {
+      "os": "macOS",
+      "network": "demo-campus"
+    },
+    "relevant": [
+      "wifi-mac",
+      "wifi-mac-alternate"
+    ]
+  },
+  {
+    "id": "R06",
+    "split": "development",
+    "query": "demo-guest portal does not open on Windows",
+    "category": "wifi_network",
+    "request_type": "troubleshoot",
+    "details": {
+      "os": "Windows",
+      "network": "demo-guest"
+    },
+    "relevant": [
+      "guest-win"
+    ]
+  },
+  {
+    "id": "R07",
+    "split": "development",
+    "query": "Demo-Lab print queue stuck on Windows",
+    "category": "printing",
+    "request_type": "troubleshoot",
+    "details": {
+      "os": "Windows",
+      "printer": "Demo-Lab"
+    },
+    "relevant": [
+      "print-win"
+    ]
+  },
+  {
+    "id": "R08",
+    "split": "development",
+    "query": "Demo-Lab print queue stuck on macOS",
+    "category": "printing",
+    "request_type": "troubleshoot",
+    "details": {
+      "os": "macOS",
+      "printer": "Demo-Lab"
+    },
+    "relevant": [
+      "print-mac"
+    ]
+  },
+  {
+    "id": "R09",
+    "split": "development",
+    "query": "forgotten Demo-Account password",
+    "category": "account_login",
+    "request_type": "troubleshoot",
+    "details": {
+      "system_or_app": "Demo-Account"
+    },
+    "relevant": [
+      "account-reset"
+    ]
+  },
+  {
+    "id": "R10",
+    "split": "development",
+    "query": "Demo-Account account locked after sign in failures",
+    "category": "account_login",
+    "request_type": "troubleshoot",
+    "details": {
+      "system_or_app": "Demo-Account"
+    },
+    "relevant": [
+      "account-lock"
+    ]
+  },
+  {
+    "id": "R11",
+    "split": "development",
+    "query": "Demo-Mail web sign in cannot open inbox",
+    "category": "email",
+    "request_type": "troubleshoot",
+    "details": {
+      "system_or_app": "Demo-Mail"
+    },
+    "relevant": [
+      "email-web"
+    ]
+  },
+  {
+    "id": "R12",
+    "split": "development",
+    "query": "Demo-Inbox client no longer syncs",
+    "category": "email",
+    "request_type": "troubleshoot",
+    "details": {
+      "system_or_app": "Demo-Inbox"
+    },
+    "relevant": [
+      "email-client"
+    ]
+  },
+  {
+    "id": "R13",
+    "split": "holdout",
+    "query": "Several devices cannot get online on the same Wi-Fi network",
+    "category": "wifi_network",
+    "request_type": "troubleshoot",
+    "details": {
+      "affected_scope": "multiple_devices"
+    },
+    "relevant": [
+      "wifi-shared"
+    ]
+  },
+  {
+    "id": "R14",
+    "split": "holdout",
+    "query": "Only this laptop cannot connect to home Wi-Fi",
+    "category": "wifi_network",
+    "request_type": "troubleshoot",
+    "details": {
+      "affected_scope": "one_device"
+    },
+    "relevant": [
+      "general-wifi-alternate"
+    ]
+  },
+  {
+    "id": "R15",
+    "split": "holdout",
+    "query": "Connect wireless network for the first time",
+    "category": "wifi_network",
+    "request_type": "setup",
+    "details": {},
+    "relevant": [
+      "wifi-first-setup"
+    ]
+  },
+  {
+    "id": "R16",
+    "split": "holdout",
+    "query": "New service access authorization request",
+    "category": "account_login",
+    "request_type": "access",
+    "details": {},
+    "relevant": [
+      "request-service-access"
+    ]
+  },
+  {
+    "id": "R17",
+    "split": "holdout",
+    "query": "Demo-Library printer Windows stuck job",
+    "category": "printing",
+    "request_type": "troubleshoot",
+    "details": {
+      "printer": "Demo-Library",
+      "os": "Windows"
+    },
+    "relevant": [
+      "print-library"
+    ]
+  },
+  {
+    "id": "R18",
+    "split": "holdout",
+    "query": "Demo-Writer freezes at launch on macOS",
+    "category": "software",
+    "request_type": "troubleshoot",
+    "details": {
+      "system_or_app": "Demo-Writer",
+      "os": "macOS"
+    },
+    "relevant": [
+      "software-mac"
+    ]
+  },
+  {
+    "id": "R19",
+    "split": "holdout",
+    "query": "Demo-Reader fails to open a document",
+    "category": "software",
+    "request_type": "troubleshoot",
+    "details": {
+      "system_or_app": "Demo-Reader"
+    },
+    "relevant": [
+      "software-reader"
+    ]
+  },
+  {
+    "id": "R20",
+    "split": "holdout",
+    "query": "Whole laptop very slow and freezes across applications",
+    "category": "other",
+    "request_type": "troubleshoot",
+    "details": {},
+    "relevant": [
+      "general-performance"
+    ]
+  }
+]

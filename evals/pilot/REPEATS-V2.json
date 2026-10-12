@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "suite": "requalification-v2.json",
+  "selected_before_first_live_v2_run": true,
+  "total_trials": 3,
+  "additional_trial_turns": 44,
+  "reason": "Unclear acquisition, denied access, unavailable product, untried step, explanation, uncertainty, thanks, named portal recovery, blocked print check and network setup recovery.",
+  "case_ids": [
+    "fresh-acquire-unclear",
+    "fresh-education-no-access",
+    "fresh-product-absent",
+    "fresh-acquire-untried",
+    "fresh-acquire-explain",
+    "fresh-wireless-uncertain",
+    "fresh-wireless-thanks",
+    "fresh-guest-access",
+    "fresh-print-blocked",
+    "fresh-wireless-join"
+  ]
+}

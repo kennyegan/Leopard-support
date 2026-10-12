@@ -1,0 +1,53 @@
+name: Private pilot qualification
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pilot-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  offline-qualification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PROVIDER: scripted
+      ALLOW_EXTERNAL_AI: 'false'
+      EXTERNAL_CALL_LIMIT: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: pip install uv==0.9.2
+      - run: uv sync --frozen
+      - run: docker compose -f infra/compose.yaml up -d --wait
+      - run: .venv/bin/ruff check apps/api scripts/pilot scripts/package_embedding.py
+      - run: .venv/bin/pytest -q --junitxml=docs/pilot/results/ci.xml
+      - run: npm ci && npm run lint && npm run typecheck && npm audit --omit=dev
+        working-directory: apps/web
+      - run: docker build -f infra/api.Dockerfile -t techspot-api:pilot-candidate .
+      - run: docker build -f infra/web.Dockerfile -t techspot-web:pilot-candidate .
+      - run: .venv/bin/python scripts/pilot/local_config.py
+      - run: docker compose --profile operations --env-file .runtime/pilot/compose.env -f infra/pilot.compose.yaml -f infra/qualification.compose.yaml run --rm release
+      - run: |
+          for identity in alice bob; do
+            docker compose --profile operations --env-file .runtime/pilot/compose.env -f infra/pilot.compose.yaml -f infra/qualification.compose.yaml run --rm release python -m app.pilot_admin invite "$identity@example.test"
+          done
+      - run: docker compose --env-file .runtime/pilot/compose.env -f infra/pilot.compose.yaml -f infra/qualification.compose.yaml up -d --wait api api2 web issuer ingress
+      - run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - run: node scripts/pilot/browser.mjs
+        env: {PILOT_BROWSER_CHANNEL: chromium}
+      - run: node scripts/pilot/quick_reply.mjs
+        env: {PILOT_BROWSER_CHANNEL: chromium}
+      - run: .venv/bin/python scripts/pilot/operations.py
+      - run: .venv/bin/python scripts/pilot/quotas.py
+      - run: .venv/bin/python scripts/pilot/faults.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pilot-local-evidence
+          path: docs/pilot/results

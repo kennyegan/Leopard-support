@@ -1,0 +1,21 @@
+# LOCAL TEST ISSUER ONLY. Never include this override in a hosted pilot.
+services:
+  api:
+    volumes: ["${PILOT_TLS_DIR}:/run/tls:ro"]
+  api2:
+    volumes: ["${PILOT_TLS_DIR}:/run/tls:ro"]
+  issuer:
+    image: techspot-api:${RELEASE_TAG}
+    command: [uvicorn, qualification_issuer:app, --host, 0.0.0.0, --port, "9443", --ssl-certfile, /run/tls/cert.pem, --ssl-keyfile, /run/tls/key.pem, --no-access-log]
+    environment:
+      PYTHONPATH: /qualification
+    env_file: ${PILOT_RUNTIME_ENV}
+    volumes:
+      - ../scripts/pilot/qualification_issuer.py:/qualification/qualification_issuer.py:ro
+      - ${PILOT_TLS_DIR}:/run/tls:ro
+    ports: ["127.0.0.1:9443:9443"]
+    networks: [backend, outbound]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]

@@ -1,0 +1,19 @@
+name: techspot-assist
+services:
+  db:
+    image: pgvector/pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
+    environment:
+      POSTGRES_DB: techspot
+      POSTGRES_USER: techspot
+      POSTGRES_PASSWORD: local-demo-only
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - techspot_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U techspot -d techspot"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+volumes:
+  techspot_db:

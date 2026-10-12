@@ -1,0 +1,238 @@
+{
+  "version": "pilot-v1",
+  "frozen_before_first_run": true,
+  "cases": [
+    {
+      "id": "C01",
+      "initial": "My demo-campus Wi-Fi stopped working on macOS and reports a demo credential error.",
+      "expected_first": "ANSWER",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "wifi-mac",
+        "wifi-mac-alternate"
+      ],
+      "followups": [],
+      "complete": true
+    },
+    {
+      "id": "C02",
+      "initial": "My demo-campus Wi-Fi stopped working on Windows and reports a demo credential error.",
+      "expected_first": "ANSWER",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "wifi-win",
+        "wifi-win-alternate"
+      ],
+      "followups": [],
+      "complete": true
+    },
+    {
+      "id": "C03",
+      "initial": "Demo-guest Wi-Fi connection on macOS cannot open the training portal.",
+      "expected_first": "ANSWER",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "guest-mac"
+      ],
+      "followups": [],
+      "complete": true
+    },
+    {
+      "id": "C04",
+      "initial": "Demo-guest Wi-Fi connection on Windows cannot open the training portal.",
+      "expected_first": "ANSWER",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "guest-win"
+      ],
+      "followups": [],
+      "complete": true
+    },
+    {
+      "id": "C05",
+      "initial": "My Demo-Lab printer queue on macOS is stuck.",
+      "expected_first": "ANSWER",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "print-mac"
+      ],
+      "followups": [],
+      "complete": true
+    },
+    {
+      "id": "C06",
+      "initial": "My Demo-Lab printer queue on Windows is stuck.",
+      "expected_first": "ANSWER",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "print-win"
+      ],
+      "followups": [],
+      "complete": true
+    },
+    {
+      "id": "C07",
+      "initial": "I forgot my Demo-Account password and cannot log in.",
+      "expected_first": "ANSWER",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "account-reset"
+      ],
+      "followups": [],
+      "complete": true
+    },
+    {
+      "id": "C08",
+      "initial": "My Demo-Mail email web sign-in is not working.",
+      "expected_first": "ANSWER",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "email-web"
+      ],
+      "followups": [],
+      "complete": true
+    },
+    {
+      "id": "C09",
+      "initial": "Demo-Writer software installation on Windows will not start.",
+      "expected_first": "ANSWER",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "software-win"
+      ],
+      "followups": [],
+      "complete": true
+    },
+    {
+      "id": "C10",
+      "initial": "Demo-Reader software cannot open a practice document.",
+      "expected_first": "ANSWER",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "software-reader"
+      ],
+      "followups": [],
+      "complete": true
+    },
+    {
+      "id": "A01",
+      "initial": "Wi-Fi isn't working.",
+      "expected_first": "ASK",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "wifi-mac",
+        "wifi-mac-alternate"
+      ],
+      "followups": [
+        "macOS on demo-campus with a demo credential error"
+      ],
+      "complete": false
+    },
+    {
+      "id": "A02",
+      "initial": "Demo-campus Wi-Fi has a credential error.",
+      "expected_first": "ASK",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "wifi-win",
+        "wifi-win-alternate"
+      ],
+      "followups": [
+        "Windows"
+      ],
+      "complete": false
+    },
+    {
+      "id": "A03",
+      "initial": "My Wi-Fi on macOS is not connecting.",
+      "expected_first": "ASK",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "guest-mac"
+      ],
+      "followups": [
+        "demo-guest training portal"
+      ],
+      "complete": false
+    },
+    {
+      "id": "A04",
+      "initial": "The Demo-Lab printer queue is stuck.",
+      "expected_first": "ASK",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "print-win"
+      ],
+      "followups": [
+        "Windows"
+      ],
+      "complete": false
+    },
+    {
+      "id": "A05",
+      "initial": "Email is not working.",
+      "expected_first": "ASK",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "email-client"
+      ],
+      "followups": [
+        "Demo-Inbox is not syncing"
+      ],
+      "complete": false
+    },
+    {
+      "id": "A06",
+      "initial": "Demo-Writer software installation fails.",
+      "expected_first": "ASK",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "software-mac"
+      ],
+      "followups": [
+        "macOS"
+      ],
+      "complete": false
+    },
+    {
+      "id": "A07",
+      "initial": "Something is broken.",
+      "expected_first": "ASK",
+      "expected_final": "ANSWER",
+      "gold_guides": [
+        "print-mac"
+      ],
+      "followups": [
+        "The Demo-Lab printer queue on macOS is stuck"
+      ],
+      "complete": false
+    },
+    {
+      "id": "A08",
+      "initial": "Can you repair my computer remotely or access my account?",
+      "expected_first": "HANDOFF",
+      "expected_final": "HANDOFF",
+      "gold_guides": [],
+      "followups": [],
+      "complete": false
+    },
+    {
+      "id": "A09",
+      "initial": "I want to talk to TechSpot staff.",
+      "expected_first": "HANDOFF",
+      "expected_final": "HANDOFF",
+      "gold_guides": [],
+      "followups": [],
+      "complete": false
+    },
+    {
+      "id": "A10",
+      "initial": "Demo-campus Wi-Fi is failing on Linux.",
+      "expected_first": "HANDOFF",
+      "expected_final": "HANDOFF",
+      "gold_guides": [],
+      "followups": [],
+      "complete": false
+    }
+  ]
+}

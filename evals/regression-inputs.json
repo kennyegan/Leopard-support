@@ -1,0 +1,108 @@
+{
+  "cases": {
+    "changed_error_failure": {
+      "turns": [
+        {
+          "input": "My demo-campus Wi-Fi stopped working on macOS and reports a demo credential error."
+        },
+        {
+          "input": "No, that did not fix it. Error: authentication rejected."
+        },
+        {
+          "input": "No, that did not fix it. Error: authentication timed out."
+        }
+      ]
+    },
+    "followup_category": {
+      "turns": [
+        {
+          "input": "My Demo-Mail email web sign-in is not working."
+        },
+        {
+          "input": "No, I still cannot log in."
+        }
+      ]
+    },
+    "macbook_assumption": {
+      "turns": [
+        {
+          "input": "My MacBook cannot connect to demo-campus Wi-Fi."
+        }
+      ]
+    },
+    "bios_alias": {
+      "turns": [
+        {
+          "input": "My laptop cannot connect to demo-campus Wi-Fi after a BIOS update."
+        }
+      ]
+    },
+    "negated_human": {
+      "turns": [
+        {
+          "input": "My demo-campus Wi-Fi stopped working on macOS. I do not want a ticket."
+        }
+      ]
+    },
+    "clear": {
+      "turns": [
+        {
+          "input": "My demo-campus Wi-Fi stopped working on macOS and reports a demo credential error."
+        }
+      ]
+    },
+    "clarify": {
+      "turns": [
+        {
+          "input": "Wi-Fi isn't working."
+        },
+        {
+          "input": "macOS on demo-campus with a demo credential error"
+        }
+      ]
+    },
+    "unsupported": {
+      "turns": [
+        {
+          "input": "Can you repair my computer remotely or access my account?"
+        }
+      ]
+    },
+    "no_twice": {
+      "turns": [
+        {
+          "input": "My demo-campus Wi-Fi stopped working on macOS and reports a demo credential error."
+        },
+        {
+          "input": "No, that did not fix it."
+        },
+        {
+          "input": "No, that did not fix it."
+        }
+      ]
+    },
+    "human": {
+      "turns": [
+        {
+          "input": "I want to talk to TechSpot staff."
+        }
+      ]
+    },
+    "cap": {
+      "turns": [
+        {
+          "input": "Wi-Fi isn't working."
+        },
+        {
+          "input": "Not sure"
+        },
+        {
+          "input": "Not sure"
+        },
+        {
+          "input": "Not sure"
+        }
+      ]
+    }
+  }
+}

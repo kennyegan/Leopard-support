@@ -1,0 +1,3 @@
+ALTER TABLE sections ADD COLUMN IF NOT EXISTS workflow_version text;
+ALTER TABLE sections ADD COLUMN IF NOT EXISTS intake jsonb NOT NULL DEFAULT '[]';
+ALTER TABLE sections ADD COLUMN IF NOT EXISTS routing jsonb NOT NULL DEFAULT '{}';

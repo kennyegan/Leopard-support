@@ -1,0 +1,10 @@
+# Local qualification only: inject a bounded interpreter delay before process death.
+services:
+  api:
+    command: [uvicorn, qualification_fault:app, --host, 0.0.0.0, --port, '8000', --no-access-log, --no-proxy-headers]
+    environment: {PYTHONPATH: /app/apps/api:/qualification}
+    volumes: [../scripts/pilot/qualification_fault.py:/qualification/qualification_fault.py:ro]
+  api2:
+    command: [uvicorn, qualification_fault:app, --host, 0.0.0.0, --port, '8000', --no-access-log, --no-proxy-headers]
+    environment: {PYTHONPATH: /app/apps/api:/qualification}
+    volumes: [../scripts/pilot/qualification_fault.py:/qualification/qualification_fault.py:ro]

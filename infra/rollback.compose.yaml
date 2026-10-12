@@ -1,0 +1,6 @@
+# Local compatibility drill against the preserved candidate; not a release target.
+services:
+  api:
+    image: techspot-api:qualification-previous
+  api2:
+    image: techspot-api:qualification-previous

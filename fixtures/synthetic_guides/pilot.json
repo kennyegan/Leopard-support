@@ -1,0 +1,2472 @@
+{
+  "version": "synthetic-2026-10-v4",
+  "permission": {
+    "approved_by": "Project synthetic fixture authors",
+    "storage": "private pilot database",
+    "external_processing": false,
+    "audience": "private synthetic pilot",
+    "retention": "30 days for conversations; versioned synthetic sources retained"
+  },
+  "guides": [
+    {
+      "id": "wifi-mac",
+      "title": "Demo-campus Wi-Fi credential error on macOS",
+      "category": "wifi_network",
+      "source_url": "demo://wifi-mac",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "macOS",
+        "network": "demo-campus"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-campus Wi-Fi stopped working on macOS. A demo credential error prevents this laptop from connecting to the wireless campus network. Try reconnecting in the fictional training environment.",
+          "steps": [
+            "Open the Wi-Fi settings on your macOS device.",
+            "Select the fictional demo-campus network and disconnect once.",
+            "Reconnect to demo-campus using the demonstration account in your training environment. Never share its password here."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "wifi-mac-alternate",
+      "title": "Demo-campus Wi-Fi on macOS: connection check",
+      "category": "wifi_network",
+      "source_url": "demo://wifi-mac-alternate",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "macOS",
+        "network": "demo-campus"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "An alternative for demo-campus Wi-Fi stopped working on macOS with a demo credential error after reconnecting did not fix it. Check the wireless connection before asking a technician.",
+          "steps": [
+            "Open Wi-Fi settings on macOS and confirm Wi-Fi is enabled.",
+            "Toggle Wi-Fi off and back on once.",
+            "Select demo-campus again. Record the exact error if the connection still fails."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "guest-mac",
+      "title": "Demo-guest Wi-Fi connection on macOS",
+      "category": "wifi_network",
+      "source_url": "demo://guest-mac",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "macOS",
+        "network": "demo-guest"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-guest guest wireless Wi-Fi connection on macOS fails to open the training portal.",
+          "steps": [
+            "Open Wi-Fi settings on macOS.",
+            "Select the fictional demo-guest network.",
+            "Open the training portal page supplied by your instructor. Stop if it asks for personal information."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "print-mac",
+      "title": "Demo-Lab printer queue on macOS",
+      "category": "printing",
+      "source_url": "demo://print-mac",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "macOS",
+        "printer": "Demo-Lab"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "The Demo-Lab printer on macOS has a stuck print queue and is not printing a demonstration document.",
+          "steps": [
+            "Open the printer queue on macOS.",
+            "Select Demo-Lab in the training printer list.",
+            "Cancel your own stuck demo job and try one test page."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "wifi-win",
+      "title": "Demo-campus Wi-Fi credential error on Windows",
+      "category": "wifi_network",
+      "source_url": "demo://wifi-win",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "network": "demo-campus"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-campus Wi-Fi stopped working on Windows. A demo credential error prevents this laptop from connecting to the wireless campus network. Try reconnecting in the fictional training environment.",
+          "steps": [
+            "Open the Wi-Fi settings on your Windows device.",
+            "Select the fictional demo-campus network and disconnect once.",
+            "Reconnect to demo-campus using the demonstration account in your training environment. Never share its password here."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "wifi-win-alternate",
+      "title": "Demo-campus Wi-Fi on Windows: connection check",
+      "category": "wifi_network",
+      "source_url": "demo://wifi-win-alternate",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "network": "demo-campus"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "An alternative for demo-campus Wi-Fi stopped working on Windows with a demo credential error after reconnecting did not fix it. Check the wireless connection before asking a technician.",
+          "steps": [
+            "Open Wi-Fi settings on Windows and confirm Wi-Fi is enabled.",
+            "Toggle Wi-Fi off and back on once.",
+            "Select demo-campus again. Record the exact error if the connection still fails."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "guest-win",
+      "title": "Demo-guest Wi-Fi connection on Windows",
+      "category": "wifi_network",
+      "source_url": "demo://guest-win",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "network": "demo-guest"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-guest guest wireless Wi-Fi connection on Windows fails to open the training portal.",
+          "steps": [
+            "Open Wi-Fi settings on Windows.",
+            "Select the fictional demo-guest network.",
+            "Open the training portal page supplied by your instructor. Stop if it asks for personal information."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "print-win",
+      "title": "Demo-Lab printer queue on Windows",
+      "category": "printing",
+      "source_url": "demo://print-win",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "printer": "Demo-Lab"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "The Demo-Lab printer on Windows has a stuck print queue and is not printing a demonstration document.",
+          "steps": [
+            "Open the printer queue on Windows.",
+            "Select Demo-Lab in the training printer list.",
+            "Cancel your own stuck demo job and try one test page."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "account-reset",
+      "title": "Demo-account forgotten password",
+      "category": "account_login",
+      "source_url": "demo://account-reset",
+      "is_synthetic": true,
+      "applicability": {
+        "system_or_app": "Demo-Account"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Forgotten password for Demo-Account account login: cannot sign in and needs a password reset in the fictional training environment.",
+          "steps": [
+            "Open the Demo-Account training sign-in screen.",
+            "Choose the practice Forgot password option.",
+            "Follow the instructor-provided reset exercise. Never paste passwords or reset codes into this chat."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "account-lock",
+      "title": "Demo-account locked sign-in",
+      "category": "account_login",
+      "source_url": "demo://account-lock",
+      "is_synthetic": true,
+      "applicability": {
+        "system_or_app": "Demo-Account"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Account login says account locked after repeated sign-in failures. This is a locked account, not a forgotten password exercise.",
+          "steps": [
+            "Stop repeated sign-in attempts in the Demo-Account exercise.",
+            "Check the training screen for an account locked notice.",
+            "Give the notice text, without personal details, to your instructor or include it in a ticket draft."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "observation",
+              "prompt": "What did you observe? You can ask for a person if you cannot complete this check.",
+              "choices": [
+                "I want a person"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. It gathers evidence; it does not establish that the issue is fixed."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "email-web",
+      "title": "Demo-Mail web sign-in",
+      "category": "email",
+      "source_url": "demo://email-web",
+      "is_synthetic": true,
+      "applicability": {
+        "system_or_app": "Demo-Mail"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Mail email web sign-in is not working. The fictional email application cannot open the practice inbox.",
+          "steps": [
+            "Open the fictional Demo-Mail training page.",
+            "Close extra Demo-Mail tabs and reload the training sign-in screen.",
+            "Try signing in once with the instructor-provided practice account."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "email-client",
+      "title": "Demo-Inbox client sync",
+      "category": "email",
+      "source_url": "demo://email-client",
+      "is_synthetic": true,
+      "applicability": {
+        "system_or_app": "Demo-Inbox"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Inbox email client is not syncing messages. The practice mailbox needs a manual synchronization check.",
+          "steps": [
+            "Open the Demo-Inbox practice client.",
+            "Check that the training account is selected.",
+            "Choose Sync once and record any error without including message content."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "software-mac",
+      "title": "Demo-Writer installation on macOS",
+      "category": "software",
+      "source_url": "demo://software-mac",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "macOS",
+        "system_or_app": "Demo-Writer"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Writer software installation on macOS will not start. Check the platform compatibility of the fictional training installer.",
+          "steps": [
+            "Check that the Demo-Writer training package is labeled for macOS.",
+            "Close an existing Demo-Writer practice window.",
+            "Open the instructor-provided training installer. Stop and contact the instructor if administrator permission is required."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "install"
+      ]
+    },
+    {
+      "id": "software-win",
+      "title": "Demo-Writer installation on Windows",
+      "category": "software",
+      "source_url": "demo://software-win",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "system_or_app": "Demo-Writer"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Writer software installation on Windows will not start. Check the platform compatibility of the fictional training installer.",
+          "steps": [
+            "Check that the Demo-Writer training package is labeled for Windows.",
+            "Close an existing Demo-Writer practice window.",
+            "Open the instructor-provided training installer. Stop and contact the instructor if administrator permission is required."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "install"
+      ]
+    },
+    {
+      "id": "software-reader",
+      "title": "Demo-Reader document opening",
+      "category": "software",
+      "source_url": "demo://software-reader",
+      "is_synthetic": true,
+      "applicability": {
+        "system_or_app": "Demo-Reader",
+        "os": "any"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Reader software cannot open a practice document on any supported platform.",
+          "steps": [
+            "Open the Demo-Reader practice application.",
+            "Choose File then Open and select the instructor-provided sample document.",
+            "Record the displayed error if the sample still will not open."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "print-library",
+      "title": "Demo-Library printer queue on Windows",
+      "category": "printing",
+      "source_url": "demo://print-library",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "printer": "Demo-Library"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Library printer on Windows has a stuck print queue and cannot print a demonstration document.",
+          "steps": [
+            "Open the Windows printer queue.",
+            "Select Demo-Library in the training printer list.",
+            "Cancel your own stuck practice job and print one test page."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "general-wifi",
+      "title": "Wi-Fi connects poorly or pages will not load \u2014 synthetic diagnostic guide",
+      "category": "wifi_network",
+      "source_url": "demo://general-wifi",
+      "is_synthetic": true,
+      "applicability": {},
+      "sections": [
+        {
+          "heading": "Initial diagnostic checks",
+          "text": "Wi-Fi network internet cannot connect keeps dropping disconnected connected without internet web pages spin forever slow wireless at home campus office cafe on any device. Original synthetic example guidance for the local demo; not official TechSpot instructions.",
+          "steps": [
+            "Check whether the device shows a Wi-Fi connection or a disconnected indicator.",
+            "Check whether the same problem affects another app or website on this device.",
+            "If another device is available on the same network, compare whether it has the same problem. Note the result without sharing network credentials."
+          ],
+          "workflow": [
+            {
+              "indexes": [
+                0
+              ],
+              "kind": "observation",
+              "prompt": "What does the Wi-Fi indicator show?",
+              "choices": [
+                "Connected but no internet",
+                "Disconnected",
+                "Connection keeps dropping"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "check-2",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "connected but no internet": "completed",
+                "disconnected": "completed",
+                "connection keeps dropping": "completed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. It gathers evidence; it does not establish that the issue is fixed.",
+              "branches": [
+                {
+                  "field": "affected_scope",
+                  "equals": "one_device",
+                  "next": "@retrieve"
+                },
+                {
+                  "field": "affected_scope",
+                  "equals": "multiple_devices",
+                  "next": "@retrieve"
+                }
+              ]
+            },
+            {
+              "indexes": [
+                1,
+                2
+              ],
+              "kind": "observation",
+              "prompt": "Is this limited to this device, or do other devices on the same network have the problem too?",
+              "choices": [
+                "Only this device",
+                "Other devices too",
+                "I cannot check another device"
+              ],
+              "node_id": "check-2",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "i cannot check another device": "blocked"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. It gathers evidence; it does not establish that the issue is fixed.",
+              "branches": [
+                {
+                  "field": "affected_scope",
+                  "equals": "one_device",
+                  "next": "@retrieve"
+                },
+                {
+                  "field": "affected_scope",
+                  "equals": "multiple_devices",
+                  "next": "@retrieve"
+                }
+              ]
+            }
+          ],
+          "workflow_version": "diagnostics-1"
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "general-wifi-alternate",
+      "title": "Wi-Fi reconnect and error observation \u2014 synthetic diagnostic guide",
+      "category": "wifi_network",
+      "source_url": "demo://general-wifi-alternate",
+      "is_synthetic": true,
+      "applicability": {
+        "affected_scope": "one_device"
+      },
+      "sections": [
+        {
+          "heading": "Initial diagnostic checks",
+          "text": "Wireless Wi-Fi drops or connected without internet after comparing devices and apps. Alternative initial check for a known network on a phone laptop or desktop. Original synthetic example guidance for the local demo; not official TechSpot instructions.",
+          "steps": [
+            "If you are on a call or transferring a file, wait until it is safe to interrupt the connection.",
+            "Turn Wi-Fi off and back on once, then select the network you normally use.",
+            "Note the exact connection message if it still fails. Do not share passwords or access codes."
+          ],
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "After reconnecting once, is the connection working?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I haven't tried it",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ],
+          "workflow_version": "diagnostics-1"
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "general-print",
+      "title": "Printer produces no output or queue is stuck \u2014 synthetic diagnostic guide",
+      "category": "printing",
+      "source_url": "demo://general-print",
+      "is_synthetic": true,
+      "applicability": {},
+      "sections": [
+        {
+          "heading": "Initial diagnostic checks",
+          "text": "The printer is not printing nothing comes out print job queue stuck printer offline on any computer. Original synthetic example guidance for the local demo; not official TechSpot instructions.",
+          "steps": [
+            "Check the printer display for an error or an empty-paper indication without opening hardware covers.",
+            "Check that the print dialog names the printer you intended to use.",
+            "Look at the queue for your own print job and note whether it is paused, pending, or marked with an error."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "observation",
+              "prompt": "What did you observe? You can ask for a person if you cannot complete this check.",
+              "choices": [
+                "I want a person"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. It gathers evidence; it does not establish that the issue is fixed."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "general-print-alternate",
+      "title": "Check one print job after initial checks \u2014 synthetic diagnostic guide",
+      "category": "printing",
+      "source_url": "demo://general-print-alternate",
+      "is_synthetic": true,
+      "applicability": {},
+      "sections": [
+        {
+          "heading": "Initial diagnostic checks",
+          "text": "Printing still fails after checking printer status and selected printer queue no output. Original synthetic example guidance for the local demo; not official TechSpot instructions.",
+          "steps": [
+            "If your own print job is stuck, cancel only that job; leave other users\u2019 jobs alone.",
+            "Try printing one small non-sensitive test document to the intended printer.",
+            "If it still fails, record the displayed error and the printer name for support."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "general-email",
+      "title": "Email is not syncing or messages will not load \u2014 synthetic diagnostic guide",
+      "category": "email",
+      "source_url": "demo://general-email",
+      "is_synthetic": true,
+      "applicability": {},
+      "sections": [
+        {
+          "heading": "Initial diagnostic checks",
+          "text": "Email mailbox messages not syncing inbox blank mail not loading not receiving messages any mail app. Original synthetic example guidance for the local demo; not official TechSpot instructions.",
+          "steps": [
+            "Check whether other websites or apps can connect on the same device.",
+            "Use the mail app\u2019s normal Refresh or Sync control once.",
+            "Note whether the issue affects receiving, sending, or both, and record any displayed error without copying message contents."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "observation",
+              "prompt": "What did you observe? You can ask for a person if you cannot complete this check.",
+              "choices": [
+                "I want a person"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. It gathers evidence; it does not establish that the issue is fixed."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "general-login",
+      "title": "Sign-in or verification is failing \u2014 synthetic diagnostic guide",
+      "category": "account_login",
+      "source_url": "demo://general-login",
+      "is_synthetic": true,
+      "applicability": {},
+      "sections": [
+        {
+          "heading": "Initial diagnostic checks",
+          "text": "Cannot log in account sign in password rejected login loop verification MFA code not arriving access denied locked out. Original synthetic example guidance for the local demo; not official TechSpot instructions.",
+          "steps": [
+            "Confirm the service name on the sign-in screen before entering any credentials.",
+            "Record the error wording without including account identifiers, passwords, verification codes or recovery links.",
+            "If the screen says the account is locked or requires an administrator, stop repeated attempts and contact that service\u2019s support."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "observation",
+              "prompt": "What did you observe? You can ask for a person if you cannot complete this check.",
+              "choices": [
+                "I want a person"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. It gathers evidence; it does not establish that the issue is fixed."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "general-app",
+      "title": "An application freezes crashes or does not open \u2014 synthetic diagnostic guide",
+      "category": "software",
+      "source_url": "demo://general-app",
+      "is_synthetic": true,
+      "applicability": {},
+      "sections": [
+        {
+          "heading": "Initial diagnostic checks",
+          "text": "App application program software freezes crashes spinning not responding cannot open fails to launch slow app. Original synthetic example guidance for the local demo; not official TechSpot instructions.",
+          "steps": [
+            "If the app is still usable, save any open work before making changes.",
+            "Check whether the problem affects only this app or other apps too.",
+            "Record the app name and any error wording, and whether the problem began after a recent change."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "observation",
+              "prompt": "What did you observe? You can ask for a person if you cannot complete this check.",
+              "choices": [
+                "I want a person"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. It gathers evidence; it does not establish that the issue is fixed."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "general-app-alternate",
+      "title": "Reopen an unresponsive application safely \u2014 synthetic diagnostic guide",
+      "category": "software",
+      "source_url": "demo://general-app-alternate",
+      "is_synthetic": true,
+      "applicability": {},
+      "sections": [
+        {
+          "heading": "Initial diagnostic checks",
+          "text": "Application still not responding after checking other apps and saving work. Reopen an app only when work is safe. Original synthetic example guidance for the local demo; not official TechSpot instructions.",
+          "steps": [
+            "If there is unsaved work you cannot recover, stop here and ask support before closing the app.",
+            "Otherwise close the affected app normally and reopen it once.",
+            "Try a non-sensitive sample task. Note whether the same error returns."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Does the task work now, or what is still blocking you?",
+              "choices": [
+                "It's working now",
+                "Still not working",
+                "I can't do this"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "general-device",
+      "title": "Device audio camera display or accessory issue \u2014 synthetic diagnostic guide",
+      "category": "other",
+      "source_url": "demo://general-device",
+      "is_synthetic": true,
+      "applicability": {},
+      "sections": [
+        {
+          "heading": "Initial diagnostic checks",
+          "text": "Device sound audio microphone camera webcam monitor display accessory bluetooth keyboard mouse not working no sound black screen not detected. Original synthetic example guidance for the local demo; not official TechSpot instructions.",
+          "steps": [
+            "Note which device or accessory is affected and what you expected it to do.",
+            "Check whether the issue occurs in one app or in more than one app.",
+            "Record any visible error or status indication. Avoid opening hardware, changing security settings, or sharing personal content."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "observation",
+              "prompt": "What did you observe? You can ask for a person if you cannot complete this check.",
+              "choices": [
+                "I want a person"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. It gathers evidence; it does not establish that the issue is fixed."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "general-performance",
+      "title": "Device is slow or freezes across apps \u2014 synthetic diagnostic guide",
+      "category": "other",
+      "source_url": "demo://general-performance",
+      "is_synthetic": true,
+      "applicability": {},
+      "sections": [
+        {
+          "heading": "Initial diagnostic checks",
+          "text": "Computer laptop phone slow freezes hangs across all applications general device performance. Original synthetic example guidance for the local demo; not official TechSpot instructions.",
+          "steps": [
+            "If possible, save any open work.",
+            "Note whether the slowdown affects one app or the entire device, and when it began.",
+            "If the device becomes unusually hot, smells burnt, or has a swollen battery, stop using it and seek qualified help."
+          ],
+          "workflow_version": "diagnostics-1",
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1,
+                2
+              ],
+              "kind": "observation",
+              "prompt": "What did you observe? You can ask for a person if you cannot complete this check.",
+              "choices": [
+                "I want a person"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. It gathers evidence; it does not establish that the issue is fixed."
+            }
+          ]
+        }
+      ],
+      "request_types": [
+        "troubleshoot"
+      ]
+    },
+    {
+      "id": "autodesk-product",
+      "title": "Download Autodesk: choose the required product",
+      "category": "software",
+      "source_url": "demo://autodesk-product",
+      "is_synthetic": true,
+      "applicability": {
+        "vendor": "Autodesk"
+      },
+      "request_types": [
+        "install",
+        "how_to"
+      ],
+      "references": [
+        {
+          "title": "Autodesk Education \u2014 choose a product",
+          "url": "https://www.autodesk.com/education/edu-software/overview",
+          "checked_at": "2026-10-11"
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Guided next steps",
+          "text": "I need to download auto desk Autodesk software which app product AutoCAD Revit Fusion unknown course program Original synthetic demonstration guidance, not official TechSpot policy.",
+          "steps": [
+            "Use the official Autodesk product catalog to identify the exact application requested by your class or project. Autodesk is the vendor; AutoCAD, Revit and Fusion are different products.",
+            "If the product is unclear, check the assignment or ask the course contact for its exact name before choosing a download."
+          ],
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1
+              ],
+              "kind": "observation",
+              "prompt": "What did you observe? You can ask for a person if you cannot complete this check.",
+              "choices": [
+                "I want a person"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown"
+              },
+              "explanation": "The product and access route must be established before installation. These references help identify them; no download or purchase is started by this chat."
+            }
+          ],
+          "workflow_version": "diagnostics-1"
+        }
+      ],
+      "intake": [
+        {
+          "field": "system_or_app",
+          "prompt": "Which Autodesk application do you need\u2014for example AutoCAD, Revit or Fusion?",
+          "choices": [
+            "AutoCAD",
+            "Revit",
+            "Fusion"
+          ]
+        },
+        {
+          "field": "os",
+          "prompt": "Which operating system is on the device where you want to install it?",
+          "choices": [
+            "Windows",
+            "macOS",
+            "Linux"
+          ]
+        },
+        {
+          "field": "license_route",
+          "prompt": "Which access route will you use: education, existing access, or a trial?",
+          "choices": [
+            "Student or educator",
+            "I already have access",
+            "Trial"
+          ]
+        }
+      ],
+      "routing": {
+        "system_or_app": [
+          null
+        ]
+      }
+    },
+    {
+      "id": "autodesk-education",
+      "title": "Download and install Autodesk software \u2014 Education access",
+      "category": "software",
+      "source_url": "demo://autodesk-education",
+      "is_synthetic": true,
+      "applicability": {
+        "vendor": "Autodesk",
+        "license_route": "education"
+      },
+      "request_types": [
+        "install",
+        "access"
+      ],
+      "references": [
+        {
+          "title": "Autodesk Education \u2014 choose a product",
+          "url": "https://www.autodesk.com/education/edu-software/overview",
+          "checked_at": "2026-10-11"
+        },
+        {
+          "title": "Official Autodesk download help",
+          "url": "https://www.autodesk.com/support/download-install/individuals/download/where-to-download-software-and-updates",
+          "checked_at": "2026-10-11"
+        },
+        {
+          "title": "Autodesk Account \u2014 products and downloads",
+          "url": "https://manage.autodesk.com/",
+          "checked_at": "2026-10-11"
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Guided next steps",
+          "text": "Need download install Autodesk AutoCAD Revit Fusion on laptop Windows macOS education access software product educational student program installation downloaded installer launch Original synthetic demonstration guidance, not official TechSpot policy.",
+          "steps": [
+            "Open the official Education product page, choose the required application and follow its access verification process. Student status alone does not confirm approval; check the outcome on Autodesk\u2019s site.",
+            "From the official product download screen, select an available version and platform that match the requested product and your device. If your platform is not offered, stop and check the product requirements rather than choosing another platform.",
+            "Download from that official screen. Keep any account verification or personal documents on Autodesk\u2019s own site.",
+            "After the download completes, use the official installer and follow its prompts. Stop if it asks for administrator access you do not have; ask the device owner or support.",
+            "Open the installed product and confirm that it launches with the expected access. Keep any sign-in details out of this chat."
+          ],
+          "workflow": [
+            {
+              "indexes": [
+                0
+              ],
+              "kind": "observation",
+              "prompt": "Do you have access to the product download on Autodesk\u2019s site?",
+              "choices": [
+                "I can access the download",
+                "Product not listed",
+                "Access not approved"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "check-2",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "completed",
+                "no": "blocked",
+                "i can access the download": "completed",
+                "product not listed": "blocked",
+                "access not approved": "blocked"
+              },
+              "explanation": "This checks whether the chosen product is available through your selected access route. Eligibility and access are decided on the official vendor site; this chat cannot approve them."
+            },
+            {
+              "indexes": [
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Tell me when the download completes, or what is blocking it.",
+              "choices": [
+                "Download complete",
+                "My platform is not listed",
+                "I haven't tried it"
+              ],
+              "milestone": "downloaded",
+              "node_id": "check-2",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "check-3",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "completed",
+                "no": "failed",
+                "it's working now": "completed",
+                "still not working": "failed",
+                "download complete": "completed",
+                "my platform is not listed": "blocked"
+              },
+              "explanation": "A completed download means the installer file is available. It does not mean the product is installed or working. Use the offered platform that matches your device."
+            },
+            {
+              "indexes": [
+                3,
+                4
+              ],
+              "kind": "action",
+              "prompt": "Does the installed product open with the access you need?",
+              "choices": [
+                "Installed and opens",
+                "Administrator permission required",
+                "It does not open"
+              ],
+              "milestone": "installed",
+              "node_id": "check-3",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed",
+                "installed and opens": "resolved",
+                "administrator permission required": "blocked",
+                "it does not open": "failed"
+              },
+              "explanation": "Installation is followed by a launch and access check. Report success only if the product opens with the access you need. Do not bypass administrator permissions."
+            }
+          ],
+          "workflow_version": "diagnostics-1"
+        }
+      ],
+      "intake": [
+        {
+          "field": "system_or_app",
+          "prompt": "Which Autodesk application do you need\u2014for example AutoCAD, Revit or Fusion?",
+          "choices": [
+            "AutoCAD",
+            "Revit",
+            "Fusion"
+          ]
+        },
+        {
+          "field": "os",
+          "prompt": "Which operating system is on the device where you want to install it?",
+          "choices": [
+            "Windows",
+            "macOS",
+            "Linux"
+          ]
+        },
+        {
+          "field": "license_route",
+          "prompt": "Which access route will you use: education, existing access, or a trial?",
+          "choices": [
+            "Student or educator",
+            "I already have access",
+            "Trial"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "autodesk-existing",
+      "title": "Download and install Autodesk software \u2014 Existing access",
+      "category": "software",
+      "source_url": "demo://autodesk-existing",
+      "is_synthetic": true,
+      "applicability": {
+        "vendor": "Autodesk",
+        "license_route": "existing"
+      },
+      "request_types": [
+        "install",
+        "access"
+      ],
+      "references": [
+        {
+          "title": "Official Autodesk download help",
+          "url": "https://www.autodesk.com/support/download-install/individuals/download/where-to-download-software-and-updates",
+          "checked_at": "2026-10-11"
+        },
+        {
+          "title": "Autodesk Account \u2014 products and downloads",
+          "url": "https://manage.autodesk.com/",
+          "checked_at": "2026-10-11"
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Guided next steps",
+          "text": "Need download install Autodesk AutoCAD Revit Fusion on laptop Windows macOS existing access software product educational student program installation downloaded installer launch Original synthetic demonstration guidance, not official TechSpot policy.",
+          "steps": [
+            "Open Autodesk Account and check whether your chosen product is available in your products. If someone assigned access, use that account; do not share sign-in information here.",
+            "From the official product download screen, select an available version and platform that match the requested product and your device. If your platform is not offered, stop and check the product requirements rather than choosing another platform.",
+            "Download from that official screen. Keep any account verification or personal documents on Autodesk\u2019s own site.",
+            "After the download completes, use the official installer and follow its prompts. Stop if it asks for administrator access you do not have; ask the device owner or support.",
+            "Open the installed product and confirm that it launches with the expected access. Keep any sign-in details out of this chat."
+          ],
+          "workflow": [
+            {
+              "indexes": [
+                0
+              ],
+              "kind": "observation",
+              "prompt": "Can you see the product and its download option in your account?",
+              "choices": [
+                "I can access the download",
+                "Product not listed",
+                "Access not approved"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "check-2",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "completed",
+                "no": "blocked",
+                "i can access the download": "completed",
+                "product not listed": "blocked",
+                "access not approved": "blocked"
+              },
+              "explanation": "This checks whether the chosen product is available through your selected access route. Eligibility and access are decided on the official vendor site; this chat cannot approve them."
+            },
+            {
+              "indexes": [
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Tell me when the download completes, or what is blocking it.",
+              "choices": [
+                "Download complete",
+                "My platform is not listed",
+                "I haven't tried it"
+              ],
+              "milestone": "downloaded",
+              "node_id": "check-2",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "check-3",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "completed",
+                "no": "failed",
+                "it's working now": "completed",
+                "still not working": "failed",
+                "download complete": "completed",
+                "my platform is not listed": "blocked"
+              },
+              "explanation": "A completed download means the installer file is available. It does not mean the product is installed or working. Use the offered platform that matches your device."
+            },
+            {
+              "indexes": [
+                3,
+                4
+              ],
+              "kind": "action",
+              "prompt": "Does the installed product open with the access you need?",
+              "choices": [
+                "Installed and opens",
+                "Administrator permission required",
+                "It does not open"
+              ],
+              "milestone": "installed",
+              "node_id": "check-3",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed",
+                "installed and opens": "resolved",
+                "administrator permission required": "blocked",
+                "it does not open": "failed"
+              },
+              "explanation": "Installation is followed by a launch and access check. Report success only if the product opens with the access you need. Do not bypass administrator permissions."
+            }
+          ],
+          "workflow_version": "diagnostics-1"
+        }
+      ],
+      "intake": [
+        {
+          "field": "system_or_app",
+          "prompt": "Which Autodesk application do you need\u2014for example AutoCAD, Revit or Fusion?",
+          "choices": [
+            "AutoCAD",
+            "Revit",
+            "Fusion"
+          ]
+        },
+        {
+          "field": "os",
+          "prompt": "Which operating system is on the device where you want to install it?",
+          "choices": [
+            "Windows",
+            "macOS",
+            "Linux"
+          ]
+        },
+        {
+          "field": "license_route",
+          "prompt": "Which access route will you use: education, existing access, or a trial?",
+          "choices": [
+            "Student or educator",
+            "I already have access",
+            "Trial"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "autodesk-trial",
+      "title": "Download and install Autodesk software \u2014 Trial access",
+      "category": "software",
+      "source_url": "demo://autodesk-trial",
+      "is_synthetic": true,
+      "applicability": {
+        "vendor": "Autodesk",
+        "license_route": "trial"
+      },
+      "request_types": [
+        "install",
+        "access"
+      ],
+      "references": [
+        {
+          "title": "Official Autodesk download help",
+          "url": "https://www.autodesk.com/support/download-install/individuals/download/where-to-download-software-and-updates",
+          "checked_at": "2026-10-11"
+        },
+        {
+          "title": "Autodesk Account \u2014 products and downloads",
+          "url": "https://manage.autodesk.com/",
+          "checked_at": "2026-10-11"
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Guided next steps",
+          "text": "Need download install Autodesk AutoCAD Revit Fusion on laptop Windows macOS trial access software product educational student program installation downloaded installer launch Original synthetic demonstration guidance, not official TechSpot policy.",
+          "steps": [
+            "Use the official download help page to find the trial route for your chosen product and review its terms before proceeding. No purchase or trial is started by this chat.",
+            "From the official product download screen, select an available version and platform that match the requested product and your device. If your platform is not offered, stop and check the product requirements rather than choosing another platform.",
+            "Download from that official screen. Keep any account verification or personal documents on Autodesk\u2019s own site.",
+            "After the download completes, use the official installer and follow its prompts. Stop if it asks for administrator access you do not have; ask the device owner or support.",
+            "Open the installed product and confirm that it launches with the expected access. Keep any sign-in details out of this chat."
+          ],
+          "workflow": [
+            {
+              "indexes": [
+                0
+              ],
+              "kind": "observation",
+              "prompt": "Is the product download available through your chosen trial route?",
+              "choices": [
+                "I can access the download",
+                "Product not listed",
+                "Access not approved"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "check-2",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "completed",
+                "no": "blocked",
+                "i can access the download": "completed",
+                "product not listed": "blocked",
+                "access not approved": "blocked"
+              },
+              "explanation": "This checks whether the chosen product is available through your selected access route. Eligibility and access are decided on the official vendor site; this chat cannot approve them."
+            },
+            {
+              "indexes": [
+                1,
+                2
+              ],
+              "kind": "action",
+              "prompt": "Tell me when the download completes, or what is blocking it.",
+              "choices": [
+                "Download complete",
+                "My platform is not listed",
+                "I haven't tried it"
+              ],
+              "milestone": "downloaded",
+              "node_id": "check-2",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "check-3",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "completed",
+                "no": "failed",
+                "it's working now": "completed",
+                "still not working": "failed",
+                "download complete": "completed",
+                "my platform is not listed": "blocked"
+              },
+              "explanation": "A completed download means the installer file is available. It does not mean the product is installed or working. Use the offered platform that matches your device."
+            },
+            {
+              "indexes": [
+                3,
+                4
+              ],
+              "kind": "action",
+              "prompt": "Does the installed product open with the access you need?",
+              "choices": [
+                "Installed and opens",
+                "Administrator permission required",
+                "It does not open"
+              ],
+              "milestone": "installed",
+              "node_id": "check-3",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed",
+                "installed and opens": "resolved",
+                "administrator permission required": "blocked",
+                "it does not open": "failed"
+              },
+              "explanation": "Installation is followed by a launch and access check. Report success only if the product opens with the access you need. Do not bypass administrator permissions."
+            }
+          ],
+          "workflow_version": "diagnostics-1"
+        }
+      ],
+      "intake": [
+        {
+          "field": "system_or_app",
+          "prompt": "Which Autodesk application do you need\u2014for example AutoCAD, Revit or Fusion?",
+          "choices": [
+            "AutoCAD",
+            "Revit",
+            "Fusion"
+          ]
+        },
+        {
+          "field": "os",
+          "prompt": "Which operating system is on the device where you want to install it?",
+          "choices": [
+            "Windows",
+            "macOS",
+            "Linux"
+          ]
+        },
+        {
+          "field": "license_route",
+          "prompt": "Which access route will you use: education, existing access, or a trial?",
+          "choices": [
+            "Student or educator",
+            "I already have access",
+            "Trial"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "autodesk-access-unknown",
+      "title": "Autodesk download access: find your available route",
+      "category": "software",
+      "source_url": "demo://autodesk-access-unknown",
+      "is_synthetic": true,
+      "applicability": {
+        "vendor": "Autodesk"
+      },
+      "request_types": [
+        "install",
+        "access"
+      ],
+      "references": [
+        {
+          "title": "Official Autodesk download help",
+          "url": "https://www.autodesk.com/support/download-install/individuals/download/where-to-download-software-and-updates",
+          "checked_at": "2026-10-11"
+        },
+        {
+          "title": "Autodesk Account \u2014 products and downloads",
+          "url": "https://manage.autodesk.com/",
+          "checked_at": "2026-10-11"
+        },
+        {
+          "title": "Autodesk Education \u2014 choose a product",
+          "url": "https://www.autodesk.com/education/edu-software/overview",
+          "checked_at": "2026-10-11"
+        }
+      ],
+      "sections": [
+        {
+          "heading": "Guided next steps",
+          "text": "Autodesk download software install unsure education existing license trial access unknown no entitlement Original synthetic demonstration guidance, not official TechSpot policy.",
+          "steps": [
+            "Use the official download help page to compare existing-account, education and trial routes for your chosen product. Do not assume institutional access or buy a license just to continue this chat.",
+            "If you cannot establish access, ask whoever requested the software which product and access arrangement they expect."
+          ],
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1
+              ],
+              "kind": "observation",
+              "prompt": "What did you observe? You can ask for a person if you cannot complete this check.",
+              "choices": [
+                "I want a person"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown"
+              },
+              "explanation": "The product and access route must be established before installation. These references help identify them; no download or purchase is started by this chat."
+            }
+          ],
+          "workflow_version": "diagnostics-1"
+        }
+      ],
+      "intake": [
+        {
+          "field": "system_or_app",
+          "prompt": "Which Autodesk application do you need\u2014for example AutoCAD, Revit or Fusion?",
+          "choices": [
+            "AutoCAD",
+            "Revit",
+            "Fusion"
+          ]
+        },
+        {
+          "field": "os",
+          "prompt": "Which operating system is on the device where you want to install it?",
+          "choices": [
+            "Windows",
+            "macOS",
+            "Linux"
+          ]
+        },
+        {
+          "field": "license_route",
+          "prompt": "Which access route will you use: education, existing access, or a trial?",
+          "choices": [
+            "Student or educator",
+            "I already have access",
+            "Trial"
+          ]
+        }
+      ],
+      "routing": {
+        "license_route": [
+          null
+        ]
+      }
+    },
+    {
+      "id": "wifi-shared",
+      "title": "Several devices cannot use the same Wi-Fi network",
+      "category": "wifi_network",
+      "source_url": "demo://wifi-shared",
+      "is_synthetic": true,
+      "applicability": {
+        "affected_scope": "multiple_devices"
+      },
+      "request_types": [
+        "troubleshoot"
+      ],
+      "references": [],
+      "sections": [
+        {
+          "heading": "Guided next steps",
+          "text": "Wi-Fi home network internet failing all devices phones laptops shared network outage internet disconnected multiple devices Original synthetic demonstration guidance, not official TechSpot policy.",
+          "steps": [
+            "Check the network equipment\u2019s visible connection or service status without changing its settings or restarting shared equipment.",
+            "Record which devices are affected and whether the status shows a service problem. Share that summary with the network owner or internet provider."
+          ],
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1
+              ],
+              "kind": "observation",
+              "prompt": "What does the equipment status show? If you cannot inspect it, say so.",
+              "choices": [
+                "Service problem indicated",
+                "I can't check the equipment",
+                "No status error"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "service problem indicated": "completed",
+                "no status error": "completed",
+                "i can't check the equipment": "blocked"
+              },
+              "explanation": "Several affected devices suggest a shared connection problem. The visible status and affected-device summary help the network owner continue; this guide does not authorize changing shared equipment."
+            }
+          ],
+          "workflow_version": "diagnostics-1"
+        }
+      ]
+    },
+    {
+      "id": "wifi-first-setup",
+      "title": "Connect a device to an available Wi-Fi network",
+      "category": "wifi_network",
+      "source_url": "demo://wifi-first-setup",
+      "is_synthetic": true,
+      "applicability": {},
+      "request_types": [
+        "setup",
+        "how_to"
+      ],
+      "references": [],
+      "sections": [
+        {
+          "heading": "Guided next steps",
+          "text": "Set up Wi-Fi connect first time join wireless network device Original synthetic demonstration guidance, not official TechSpot policy.",
+          "steps": [
+            "Open the device\u2019s normal Wi-Fi settings and select the network you are authorized to use. Enter credentials only in the device\u2019s trusted network prompt, never in this chat.",
+            "If the network name or required access is unknown, ask the network owner for the approved connection instructions."
+          ],
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1
+              ],
+              "kind": "action",
+              "prompt": "Did the device connect, or is the network/access information missing?",
+              "choices": [
+                "It's working now",
+                "Network not listed",
+                "I need access"
+              ],
+              "node_id": "check-1",
+              "risk": "reversible",
+              "transitions": {
+                "completed": "@verify",
+                "failed": "@retry",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown",
+                "yes": "resolved",
+                "no": "failed",
+                "it's working now": "resolved",
+                "still not working": "failed",
+                "network not listed": "blocked",
+                "i need access": "blocked"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. Try it only when it fits your setup, then report the result. If access or permissions prevent it, stop and describe the blocker."
+            }
+          ],
+          "workflow_version": "diagnostics-1"
+        }
+      ]
+    },
+    {
+      "id": "request-service-access",
+      "title": "Request access to an application or service",
+      "category": "account_login",
+      "source_url": "demo://request-service-access",
+      "is_synthetic": true,
+      "applicability": {},
+      "request_types": [
+        "access"
+      ],
+      "references": [],
+      "sections": [
+        {
+          "heading": "Guided next steps",
+          "text": "Need request access permission account service application new user authorization Original synthetic demonstration guidance, not official TechSpot policy.",
+          "steps": [
+            "Identify the service and the access you need, then use its official access-request process or contact its owner.",
+            "If an organization manages the account, ask that organization\u2019s administrator to confirm access. This assistant cannot grant permissions or verify your entitlement."
+          ],
+          "workflow": [
+            {
+              "indexes": [
+                0,
+                1
+              ],
+              "kind": "observation",
+              "prompt": "What did you observe? You can ask for a person if you cannot complete this check.",
+              "choices": [
+                "I want a person"
+              ],
+              "node_id": "check-1",
+              "risk": "observe",
+              "transitions": {
+                "completed": "@handoff",
+                "failed": "@handoff",
+                "blocked": "@handoff",
+                "unknown": "@wait",
+                "not_tried": "@wait"
+              },
+              "replies": {
+                "i haven't tried it": "not_tried",
+                "i can't do this": "blocked",
+                "i'm not sure": "unknown"
+              },
+              "explanation": "This check uses only the steps shown in this synthetic guide. It gathers evidence; it does not establish that the issue is fixed."
+            }
+          ],
+          "workflow_version": "diagnostics-1"
+        }
+      ]
+    }
+  ]
+}

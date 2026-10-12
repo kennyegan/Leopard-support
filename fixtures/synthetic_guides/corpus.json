@@ -1,0 +1,360 @@
+{
+  "version": "synthetic-2026-10-v1",
+  "permission": {
+    "approved_by": "Project synthetic fixture authors",
+    "storage": "local development",
+    "external_processing": false,
+    "audience": "local demo",
+    "retention": "course evaluation"
+  },
+  "guides": [
+    {
+      "id": "wifi-mac",
+      "title": "Demo-campus Wi-Fi credential error on macOS",
+      "category": "wifi_network",
+      "source_url": "demo://wifi-mac",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "macOS",
+        "network": "demo-campus"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-campus Wi-Fi stopped working on macOS. A demo credential error prevents this laptop from connecting to the wireless campus network. Try reconnecting in the fictional training environment.",
+          "steps": [
+            "Open the Wi-Fi settings on your macOS device.",
+            "Select the fictional demo-campus network and disconnect once.",
+            "Reconnect to demo-campus using the demonstration account in your training environment. Never share its password here."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wifi-mac-alternate",
+      "title": "Demo-campus Wi-Fi on macOS: connection check",
+      "category": "wifi_network",
+      "source_url": "demo://wifi-mac-alternate",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "macOS",
+        "network": "demo-campus"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "An alternative for demo-campus Wi-Fi stopped working on macOS with a demo credential error after reconnecting did not fix it. Check the wireless connection before asking a technician.",
+          "steps": [
+            "Open Wi-Fi settings on macOS and confirm Wi-Fi is enabled.",
+            "Toggle Wi-Fi off and back on once.",
+            "Select demo-campus again. Record the exact error if the connection still fails."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guest-mac",
+      "title": "Demo-guest Wi-Fi connection on macOS",
+      "category": "wifi_network",
+      "source_url": "demo://guest-mac",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "macOS",
+        "network": "demo-guest"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-guest guest wireless Wi-Fi connection on macOS fails to open the training portal.",
+          "steps": [
+            "Open Wi-Fi settings on macOS.",
+            "Select the fictional demo-guest network.",
+            "Open the training portal page supplied by your instructor. Stop if it asks for personal information."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "print-mac",
+      "title": "Demo-Lab printer queue on macOS",
+      "category": "printing",
+      "source_url": "demo://print-mac",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "macOS",
+        "printer": "Demo-Lab"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "The Demo-Lab printer on macOS has a stuck print queue and is not printing a demonstration document.",
+          "steps": [
+            "Open the printer queue on macOS.",
+            "Select Demo-Lab in the training printer list.",
+            "Cancel your own stuck demo job and try one test page."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wifi-win",
+      "title": "Demo-campus Wi-Fi credential error on Windows",
+      "category": "wifi_network",
+      "source_url": "demo://wifi-win",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "network": "demo-campus"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-campus Wi-Fi stopped working on Windows. A demo credential error prevents this laptop from connecting to the wireless campus network. Try reconnecting in the fictional training environment.",
+          "steps": [
+            "Open the Wi-Fi settings on your Windows device.",
+            "Select the fictional demo-campus network and disconnect once.",
+            "Reconnect to demo-campus using the demonstration account in your training environment. Never share its password here."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wifi-win-alternate",
+      "title": "Demo-campus Wi-Fi on Windows: connection check",
+      "category": "wifi_network",
+      "source_url": "demo://wifi-win-alternate",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "network": "demo-campus"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "An alternative for demo-campus Wi-Fi stopped working on Windows with a demo credential error after reconnecting did not fix it. Check the wireless connection before asking a technician.",
+          "steps": [
+            "Open Wi-Fi settings on Windows and confirm Wi-Fi is enabled.",
+            "Toggle Wi-Fi off and back on once.",
+            "Select demo-campus again. Record the exact error if the connection still fails."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guest-win",
+      "title": "Demo-guest Wi-Fi connection on Windows",
+      "category": "wifi_network",
+      "source_url": "demo://guest-win",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "network": "demo-guest"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-guest guest wireless Wi-Fi connection on Windows fails to open the training portal.",
+          "steps": [
+            "Open Wi-Fi settings on Windows.",
+            "Select the fictional demo-guest network.",
+            "Open the training portal page supplied by your instructor. Stop if it asks for personal information."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "print-win",
+      "title": "Demo-Lab printer queue on Windows",
+      "category": "printing",
+      "source_url": "demo://print-win",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "printer": "Demo-Lab"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "The Demo-Lab printer on Windows has a stuck print queue and is not printing a demonstration document.",
+          "steps": [
+            "Open the printer queue on Windows.",
+            "Select Demo-Lab in the training printer list.",
+            "Cancel your own stuck demo job and try one test page."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "account-reset",
+      "title": "Demo-account forgotten password",
+      "category": "account_login",
+      "source_url": "demo://account-reset",
+      "is_synthetic": true,
+      "applicability": {
+        "system_or_app": "Demo-Account"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Forgotten password for Demo-Account account login: cannot sign in and needs a password reset in the fictional training environment.",
+          "steps": [
+            "Open the Demo-Account training sign-in screen.",
+            "Choose the practice Forgot password option.",
+            "Follow the instructor-provided reset exercise. Never paste passwords or reset codes into this chat."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "account-lock",
+      "title": "Demo-account locked sign-in",
+      "category": "account_login",
+      "source_url": "demo://account-lock",
+      "is_synthetic": true,
+      "applicability": {
+        "system_or_app": "Demo-Account"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Account login says account locked after repeated sign-in failures. This is a locked account, not a forgotten password exercise.",
+          "steps": [
+            "Stop repeated sign-in attempts in the Demo-Account exercise.",
+            "Check the training screen for an account locked notice.",
+            "Give the notice text, without personal details, to your instructor or include it in a ticket draft."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "email-web",
+      "title": "Demo-Mail web sign-in",
+      "category": "email",
+      "source_url": "demo://email-web",
+      "is_synthetic": true,
+      "applicability": {
+        "system_or_app": "Demo-Mail"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Mail email web sign-in is not working. The fictional email application cannot open the practice inbox.",
+          "steps": [
+            "Open the fictional Demo-Mail training page.",
+            "Close extra Demo-Mail tabs and reload the training sign-in screen.",
+            "Try signing in once with the instructor-provided practice account."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "email-client",
+      "title": "Demo-Inbox client sync",
+      "category": "email",
+      "source_url": "demo://email-client",
+      "is_synthetic": true,
+      "applicability": {
+        "system_or_app": "Demo-Inbox"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Inbox email client is not syncing messages. The practice mailbox needs a manual synchronization check.",
+          "steps": [
+            "Open the Demo-Inbox practice client.",
+            "Check that the training account is selected.",
+            "Choose Sync once and record any error without including message content."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "software-mac",
+      "title": "Demo-Writer installation on macOS",
+      "category": "software",
+      "source_url": "demo://software-mac",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "macOS",
+        "system_or_app": "Demo-Writer"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Writer software installation on macOS will not start. Check the platform compatibility of the fictional training installer.",
+          "steps": [
+            "Check that the Demo-Writer training package is labeled for macOS.",
+            "Close an existing Demo-Writer practice window.",
+            "Open the instructor-provided training installer. Stop and contact the instructor if administrator permission is required."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "software-win",
+      "title": "Demo-Writer installation on Windows",
+      "category": "software",
+      "source_url": "demo://software-win",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "system_or_app": "Demo-Writer"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Writer software installation on Windows will not start. Check the platform compatibility of the fictional training installer.",
+          "steps": [
+            "Check that the Demo-Writer training package is labeled for Windows.",
+            "Close an existing Demo-Writer practice window.",
+            "Open the instructor-provided training installer. Stop and contact the instructor if administrator permission is required."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "software-reader",
+      "title": "Demo-Reader document opening",
+      "category": "software",
+      "source_url": "demo://software-reader",
+      "is_synthetic": true,
+      "applicability": {
+        "system_or_app": "Demo-Reader",
+        "os": "any"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Reader software cannot open a practice document on any supported platform.",
+          "steps": [
+            "Open the Demo-Reader practice application.",
+            "Choose File then Open and select the instructor-provided sample document.",
+            "Record the displayed error if the sample still will not open."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "print-library",
+      "title": "Demo-Library printer queue on Windows",
+      "category": "printing",
+      "source_url": "demo://print-library",
+      "is_synthetic": true,
+      "applicability": {
+        "os": "Windows",
+        "printer": "Demo-Library"
+      },
+      "sections": [
+        {
+          "heading": "Troubleshooting",
+          "text": "Demo-Library printer on Windows has a stuck print queue and cannot print a demonstration document.",
+          "steps": [
+            "Open the Windows printer queue.",
+            "Select Demo-Library in the training printer list.",
+            "Cancel your own stuck practice job and print one test page."
+          ]
+        }
+      ]
+    }
+  ]
+}
