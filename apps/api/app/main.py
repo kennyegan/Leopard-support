@@ -12,7 +12,7 @@ from psycopg import OperationalError
 from psycopg_pool import PoolTimeout, TooManyRequests
 from psycopg.types.json import Jsonb
 from .config import settings, build_revision
-from .db import connection, close_pools
+from .db import connection, close_pools, migrate
 from .llm import ProviderError, provider_configured
 from .models import FeedbackIn, MessageIn, SessionIn, State, TicketIn
 from .privacy import redact
@@ -26,6 +26,9 @@ from .turns import pilot_turn
 @asynccontextmanager
 async def lifespan(app):
     settings().validate_pilot()
+    if settings().app_mode == "demo":
+        # Hosted demos have no release step, so apply any new migrations before serving.
+        migrate()
     # Fail visibly if real embedding weights are missing; never silently substitute fake retrieval.
     embedder()
     if settings().app_mode == "pilot":
@@ -185,9 +188,16 @@ def create_session(body: SessionIn, user=Depends(principal)):
         raise HTTPException(403, "Research mode is unavailable in the pilot")
     id = uuid4()
     with connection() as conn:
+        pilot = settings().app_mode == "pilot"
         conn.execute(
-            "INSERT INTO sessions(id,mode,state,owner_id) VALUES(%s,%s,%s,%s)",
-            (id, body.mode, Jsonb(State().model_dump()), user["id"] if user else None),
+            "INSERT INTO sessions(id,mode,state,owner_id,account_id) VALUES(%s,%s,%s,%s,%s)",
+            (
+                id,
+                body.mode,
+                Jsonb(State().model_dump()),
+                user["id"] if user and pilot else None,
+                user["id"] if user and not pilot else None,
+            ),
         )
     return {"id": str(id), "mode": body.mode}
 
@@ -256,8 +266,46 @@ def snapshots(id: UUID, user=Depends(principal)):
         ).fetchall()
 
 
+@app.get("/api/account/sessions")
+def account_sessions(user=Depends(principal)):
+    if settings().app_mode != "demo" or not user:
+        raise HTTPException(401, "Sign in to see your conversations")
+    with connection() as conn:
+        return conn.execute(
+            """SELECT s.id, s.updated_at, s.state->>'outcome' AS outcome, first.text_redacted AS title
+            FROM sessions s
+            JOIN LATERAL (SELECT text_redacted FROM messages m WHERE m.session_id=s.id AND m.role='user'
+              ORDER BY m.created_at LIMIT 1) first ON true
+            WHERE s.account_id=%s ORDER BY s.updated_at DESC LIMIT 100""",
+            (user["id"],),
+        ).fetchall()
+
+
+@app.post("/api/sessions/{id}/claim")
+def claim_session(id: UUID, user=Depends(principal)):
+    """Attach a guest conversation to the account that just signed in."""
+    if settings().app_mode != "demo" or not user:
+        raise HTTPException(401, "Sign in to save this conversation")
+    with connection() as conn:
+        session = get_session(conn, id, lock=True, user=user)
+        if session.get("account_id") is None:
+            conn.execute("UPDATE sessions SET account_id=%s WHERE id=%s", (user["id"], id))
+    return {"id": str(id), "claimed": True}
+
+
 @app.delete("/api/sessions/{id}")
 def delete_session(id: UUID, user=Depends(principal)):
+    if settings().app_mode == "demo":
+        if not user:
+            raise HTTPException(403, "Sign in to delete saved conversations")
+        with connection() as conn:
+            get_session(conn, id, lock=True, user=user)
+            deleted = conn.execute(
+                "SELECT purge_account_session(%s,%s) AS deleted", (id, user["id"])
+            ).fetchone()
+        if not deleted["deleted"]:
+            raise HTTPException(404, "Session not found")
+        return {"deleted": True}
     if settings().app_mode != "pilot":
         raise HTTPException(403, "Complete deletion is available for owned pilot conversations")
     with connection() as conn:

@@ -17,3 +17,5 @@ next-env.d.ts
 /docs/
 /evals/results/
 /apps/web/AGENTS.md
+.env.local
+.env.*.local

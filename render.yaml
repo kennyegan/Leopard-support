@@ -44,5 +44,8 @@ services:
       # Lifetime cap on external calls; also raise provider_usage.authorized_limit in the database.
       - key: EXTERNAL_CALL_LIMIT
         value: "2000"
+      # Firebase project ID for optional sign-in; leave empty to run guest-only.
+      - key: FIREBASE_PROJECT_ID
+        sync: false
       - key: ADMIN_TOKEN
         generateValue: true

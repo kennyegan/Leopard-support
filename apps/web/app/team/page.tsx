@@ -1,5 +1,6 @@
 'use client';
 import {useEffect, useState} from 'react';
+import {PageHeader} from '@/components/PageHeader';
 
 type Row = {n: number; [key: string]: string | number | null};
 type Stats = {sessions: number; questions: number; decisions: Row[]; outcomes: Row[]; feedback: Row[]};
@@ -20,9 +21,8 @@ export default function Team() {
  const [error, setError] = useState('');
  const [loading, setLoading] = useState(false);
  const count = (rows: Row[], key: string, value: string) => rows.find(r => r[key] === value)?.n ?? 0;
- return <main className="document" id="main">
-  <div className="eyebrow">Team only</div>
-  <h1>Demo results</h1>
+ return <><PageHeader/><main className="document" id="main">
+  <h1>Team results</h1>
   <p>{pilot ? 'Aggregate counts only. Your invited account must have the administrator role.' : 'Aggregate counts only. The team token stays in this page’s memory.'}</p>
   <form onSubmit={async e => {
    e.preventDefault(); setError(''); setLoading(true);
@@ -47,5 +47,5 @@ export default function Team() {
    <h2>Outcomes</h2><Table caption="Conversation outcomes" rows={stats.outcomes} columns={['Outcome']}/>
    <h2>Feedback</h2><Table caption="Feedback by kind and value" rows={stats.feedback} columns={['Kind', 'Value']}/>
   </>}
- </main>;
+ </main></>;
 }

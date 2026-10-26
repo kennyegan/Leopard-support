@@ -3,6 +3,7 @@ import Link from 'next/link';
 import {outcomeLabel, type Message} from '@/lib/api';
 import {RichText} from '@/components/RichText';
 import {BookIcon, ExternalIcon, RetryIcon} from '@/components/Icons';
+import {LeopardMark} from '@/components/LeopardMark';
 import {FeedbackRow, type FeedbackKind} from './FeedbackRow';
 
 type Props = {
@@ -24,7 +25,7 @@ export function MessageCard({message: m, latest, busy, ratings, showProvider, on
   </article>;
  }
  return <article className="message assistant">
-  <div className="message-label"><span className="avatar" aria-hidden="true">L</span>Leopard Support
+  <div className="message-label"><LeopardMark size={22} tile className="avatar"/>Leopard Support
    {r && <span className={`outcome ${r.action.toLowerCase()}`}>{outcomeLabel(r)}</span>}</div>
   <p><RichText text={m.text}/></p>
   {r && <>

@@ -91,11 +91,18 @@ def authenticate(request):
 
 def principal(request: Request):
     if settings().app_mode == "demo":
-        return None
+        from .accounts import current_account
+
+        return current_account(request)
     return getattr(request.state, "principal", None) or authenticate(request)
 
 
 def authorize_owner(row, user):
+    if settings().app_mode == "demo":
+        # Guest conversations stay reachable by id; owned ones only by their account.
+        if row.get("account_id") and (not user or row["account_id"] != user["id"]):
+            raise HTTPException(404, "Session not found")
+        return
     if settings().app_mode == "pilot" and (not user or row.get("owner_id") != user["id"]):
         # Admin stats access does not implicitly grant private conversation access.
         raise HTTPException(404, "Session not found")
@@ -154,8 +161,8 @@ async def callback(request: Request):
 @router.get("/me")
 def me(request: Request):
     user = principal(request)
-    if user is None:
-        return {"mode": "demo", "authenticated": False}
+    if settings().app_mode == "demo":
+        return {"mode": "demo", "authenticated": user is not None, "accounts": bool(settings().firebase_project_id)}
     return {
         "mode": "pilot",
         "authenticated": True,

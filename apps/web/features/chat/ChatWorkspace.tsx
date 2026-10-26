@@ -1,7 +1,7 @@
 'use client';
 import {useEffect, useRef, useState} from 'react';
-import {api, readHealth, session as auth, type History, type Message, type Reply, type Runtime, type Ticket} from '@/lib/api';
-import {PlusIcon, ShieldIcon} from '@/components/Icons';
+import {api, ApiError, readHealth, session as auth, type History, type Message, type Reply, type Runtime, type Ticket} from '@/lib/api';
+import {LeopardMark} from '@/components/LeopardMark';
 import {MessageCard} from './MessageCard';
 import {TicketDraft} from './TicketDraft';
 import {Composer} from './Composer';
@@ -10,10 +10,14 @@ import type {FeedbackKind} from './FeedbackRow';
 const starters = ["Wi-Fi isn't working.", 'My Demo-Lab printer queue on Windows is stuck.', 'I want to talk to TechSpot staff.'];
 const turnTimeout = 60000;
 
-export function ChatWorkspace({initialRuntime}: {initialRuntime: Runtime | null}) {
- const [runtime, setRuntime] = useState<Runtime | null>(initialRuntime);
+type Props = {
+ runtime: Runtime | null; mode: string;
+ onRuntime: (runtime: Runtime) => void; onModeRestored: (mode: string) => void;
+ onSession: (id: string) => void; onBusy: (busy: boolean) => void; onTurn: () => void;
+};
+
+export function ChatWorkspace({runtime, mode, onRuntime, onModeRestored, onSession, onBusy, onTurn}: Props) {
  const [session, setSession] = useState('');
- const [mode, setMode] = useState('policy');
  const [messages, setMessages] = useState<Message[]>([]);
  const [text, setText] = useState('');
  const [working, setBusy] = useState(false);
@@ -31,10 +35,12 @@ export function ChatWorkspace({initialRuntime}: {initialRuntime: Runtime | null}
  const generation = useRef(0);
  const sending = useRef(false);
  const pendingSend = useRef<{value: string; requestId: string} | null>(null);
- const messageList = useRef<HTMLDivElement>(null);
+ const scroller = useRef<HTMLDivElement>(null);
  const pilot = runtime?.app_mode === 'pilot';
  const supportEmail = /^[^\s@]+@[^\s@]+$/.test(runtime?.support_contact ?? '') ? runtime!.support_contact! : process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? '';
  const latestAssistant = messages.filter(m => m.role === 'assistant').at(-1)?.id;
+
+ useEffect(() => { onBusy(working); }, [working, onBusy]);
 
  useEffect(() => {
   const current = ++generation.current;
@@ -45,38 +51,35 @@ export function ChatWorkspace({initialRuntime}: {initialRuntime: Runtime | null}
     if (!id) return;
     const s = await api<History>(`/api/sessions/${id}`, {signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)])});
     if (generation.current !== current || controller.signal.aborted) return;
-    setSession(s.id); setMode(s.mode); setMessages(s.messages);
+    setSession(s.id); onSession(s.id); onModeRestored(s.mode); setMessages(s.messages);
     setTicket(s.state.outcome === 'handoff' ? s.ticket : null); setDraft(s.ticket?.draft || '');
     setRatings(Object.fromEntries(s.feedback.map(f => [`${f.message_id}-${f.kind}`, f.value])));
     if (s.state.pending_failure) setPendingFix(s.messages.filter(m => m.role === 'assistant').at(-1)?.id ?? null);
    } catch (e) {
-    if (generation.current === current && !controller.signal.aborted) setError(e instanceof Error ? e.message : 'Could not restore conversation.');
+    if (generation.current !== current || controller.signal.aborted) return;
+    // A conversation that belongs to another account, or no longer exists, simply starts fresh.
+    if (e instanceof ApiError && e.status === 404) { localStorage.removeItem(auth.key); return; }
+    setError(e instanceof Error ? e.message : 'Could not restore conversation.');
    } finally {
     if (generation.current === current && !controller.signal.aborted) setRestoring(false);
    }
   };
   void restore();
   return () => controller.abort();
+  // Restores once per mounted conversation; the shell remounts this component to switch chats.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, []);
 
  useEffect(() => {
-  const container = messageList.current;
+  const container = scroller.current;
   const target = container?.querySelector<HTMLElement>(thinking ? '.typing' : '.message:last-of-type');
-  if (container && target) container.scrollTo({top: container.scrollTop + target.getBoundingClientRect().top - container.getBoundingClientRect().top - 16, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+  if (container && target) container.scrollTo({top: container.scrollTop + target.getBoundingClientRect().top - container.getBoundingClientRect().top - 24, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
  }, [messages, thinking]);
 
  async function ensureSession() {
   if (session) return session;
   const s = await api<{id: string}>('/api/sessions', {method: 'POST', body: JSON.stringify({mode})});
-  localStorage.setItem(auth.key, s.id); setSession(s.id); return s.id;
- }
-
- function newChat() {
-  generation.current++;
-  localStorage.removeItem(auth.key);
-  pendingSend.current = null;
-  setRestoring(false); setSession(''); setMessages([]); setText(''); setConfirmDelete(false);
-  setTicket(null); setDraft(''); setError(''); setNotice(''); setRatings({}); setPendingFix(null);
+  localStorage.setItem(auth.key, s.id); setSession(s.id); onSession(s.id); return s.id;
  }
 
  async function submitTurn(id: string, value: string, requestId: string, placeholder?: string) {
@@ -95,7 +98,8 @@ export function ChatWorkspace({initialRuntime}: {initialRuntime: Runtime | null}
    if (r.ticket) { setTicket(r.ticket); setDraft(r.ticket.draft); }
    else if (r.state.outcome !== 'handoff') { setTicket(null); setDraft(''); }
    setPendingFix(null);
-   readHealth().then(setRuntime).catch(() => {});
+   onTurn();
+   readHealth().then(onRuntime).catch(() => {});
   } finally {
    clearTimeout(slowTimer); setThinking(false); setSlow(false);
   }
@@ -163,68 +167,52 @@ export function ChatWorkspace({initialRuntime}: {initialRuntime: Runtime | null}
  }
 
  async function deleteConversation() {
-  try { await api(`/api/sessions/${session}`, {method: 'DELETE'}); newChat(); }
+  try { await api(`/api/sessions/${session}`, {method: 'DELETE'}); localStorage.removeItem(auth.key); window.location.reload(); }
   catch { setError('Could not delete the conversation. Please retry.'); }
  }
 
  const failed = messages.find(m => m.failed);
- return <main className="workspace" id="main">
-  <aside className="sidebar">
-   <div className="eyebrow">Wentworth · TechSpot self-service</div>
-   <h1>Let’s get you<br/> unstuck.</h1>
-   <p className="lede">Describe a tech problem in your own words. Leopard Support finds the right TechSpot guide, asks one quick question when something’s missing, and drafts a ticket when you need a person.</p>
-   <button type="button" className="secondary new-chat" onClick={newChat} disabled={working}><PlusIcon/> New conversation</button>
-   {pilot && session && (confirmDelete
-    ? <div className="confirm" role="group" aria-label="Confirm delete"><p>Delete this conversation and its saved draft permanently?</p>
-     <div className="actions"><button type="button" className="danger" disabled={busy} onClick={deleteConversation}>Delete</button>
-      <button type="button" className="ghost" onClick={() => setConfirmDelete(false)}>Cancel</button></div></div>
-    : <button type="button" className="ghost" disabled={busy} onClick={() => setConfirmDelete(true)}>Delete conversation</button>)}
-   <ol className="how">
-    <li><span><strong>Describe it.</strong> What you see, on which device.</span></li>
-    <li><span><strong>Answer a quick check.</strong> Only when a detail is missing.</span></li>
-    <li><span><strong>Follow the steps</strong> or get a ticket draft for TechSpot.</span></li>
-   </ol>
-   <p className="privacy"><ShieldIcon/> Never share passwords, student IDs or personal details. Drafts are privacy-filtered before saving.</p>
-   {!pilot && <details className="advanced">
-    <summary>Research settings</summary>
-    <label htmlFor="mode">Research mode</label>
-    <select id="mode" value={mode} disabled={!!session || busy} onChange={e => setMode(e.target.value)}>
-     <option value="policy">Assist · answer, ask, handoff</option>
-     <option value="baseline">Baseline · always answer</option>
-    </select>
-    <small>{mode === 'policy' ? 'Checks whether a guide fits your situation.' : 'Uses the closest guide even when details are missing. For comparison only.'}</small>
-    <small className="status-line"><span className={`status-dot ${runtime?.status ?? ''}`}/>
-     {runtime ? `${runtime.provider === 'scripted' ? 'Scripted offline interpreter' : `Interpreter: ${runtime.provider}`} · ${runtime.external_ai_enabled ? 'external AI on' : 'external AI off'}` : 'Checking interpreter…'}</small>
-   </details>}
-  </aside>
-
-  <section className={`chat${ticket ? ' has-ticket' : ''}`} aria-label="Support conversation">
-   <div className="chat-heading">
-    <div><strong>Support conversation</strong><p>Answers come from sample TechSpot guides.</p></div>
-    <span className={`pill ${runtime?.status === 'degraded' ? 'warn' : ''}`}><span className={`status-dot ${runtime?.status ?? ''}`}/>{runtime?.status === 'degraded' ? 'Limited' : 'Online'}</span>
-   </div>
-   <div className="messages" ref={messageList} aria-live="polite" aria-relevant="additions">
-    {!restoring && messages.length === 0 && <div className="welcome">
-     <h2>What’s getting in your way?</h2>
-     <p>Describe what’s happening in your own words. You can ask what a step means, or say when you aren’t sure.</p>
-     <div className="starters">{starters.map(s => <button type="button" key={s} onClick={() => send(s)} disabled={busy}>{s}</button>)}</div>
-    </div>}
-    {messages.map(m => <MessageCard key={m.id} message={m} latest={m.id === latestAssistant} busy={busy} ratings={ratings} showProvider={!pilot}
-     onReply={send} onRetry={() => send(m.text)} onFeedback={(kind, value, reason, comment) => feedback(m.response!, kind, value, reason, comment)}/>)}
-    {(restoring || thinking) && <div className="typing" role="status">
-     <span className="dots" aria-hidden="true"><i/><i/><i/></span>
-     {restoring ? 'Restoring your conversation…' : slow ? 'Still working — the server may be waking up…' : 'Working through your request…'}
+ const empty = !restoring && messages.length === 0;
+ return <main className={`conversation${empty ? ' is-empty' : ''}`} id="main">
+  <div className="scroller" ref={scroller}>
+   <div className="column">
+    {empty && <section className="welcome" aria-labelledby="welcome-title">
+     <LeopardMark size={56} tile/>
+     <h1 id="welcome-title">What’s getting in your way?</h1>
+     <p>Describe the problem in your own words: what you see and on which device. I’ll find the right TechSpot guide, ask one quick question if something’s missing, or draft a ticket when you need a person.</p>
+     <div className="starters" role="group" aria-label="Try one of these">
+      {starters.map(s => <button type="button" key={s} onClick={() => send(s)} disabled={busy}>{s}</button>)}
+     </div>
+    </section>}
+    <div className="messages" aria-live="polite" aria-relevant="additions">
+     {messages.map(m => <MessageCard key={m.id} message={m} latest={m.id === latestAssistant} busy={busy} ratings={ratings} showProvider={!pilot && mode === 'baseline'}
+      onReply={send} onRetry={() => send(m.text)} onFeedback={(kind, value, reason, comment) => feedback(m.response!, kind, value, reason, comment)}/>)}
+     {(restoring || thinking) && <div className="typing" role="status">
+      <span className="dots" aria-hidden="true"><i/><i/><i/></span>
+      {restoring ? 'Restoring your conversation…' : slow ? 'Still working — the server may be waking up…' : 'Working through your request…'}
+     </div>}
+    </div>
+    {ticket && <TicketDraft draft={draft} busy={busy} supportEmail={supportEmail} onChange={setDraft} onSave={saveTicket}/>}
+    {pilot && session && <div className="pilot-delete">{confirmDelete
+     ? <><span>Delete this conversation and its saved draft permanently?</span>
+      <button type="button" className="danger small" disabled={busy} onClick={deleteConversation}>Delete</button>
+      <button type="button" className="ghost small" onClick={() => setConfirmDelete(false)}>Cancel</button></>
+     : <button type="button" className="ghost small" disabled={busy} onClick={() => setConfirmDelete(true)}>Delete conversation</button>}
     </div>}
    </div>
-   {ticket && <TicketDraft draft={draft} busy={busy} supportEmail={supportEmail} onChange={setDraft} onSave={saveTicket}/>}
-   <div className="status-area">
-    {runtime?.status === 'degraded' && <p role="status" className="notice warn">Some answers may be unavailable right now. You can still describe your problem or ask for a person.</p>}
-    {runtime?.ai_requests_remaining != null && runtime.ai_requests_remaining <= 5 && <p role="status" className="notice">Demo AI allowance: {runtime.ai_requests_remaining} requests remaining. More usage needs owner authorization.</p>}
-    {pendingFix && <div className="pending-fix"><p>Your “No” is saved. Continue to the next step.</p><button type="button" disabled={busy} onClick={retryFix}>Retry next step</button></div>}
-    {error && <p role="alert" className="error">{error}{failed && ' Use Retry on your message to send it again.'}</p>}
-    {notice && <p role="status" className="notice">{notice}</p>}
+  </div>
+  <div className="dock">
+   <div className="column">
+    <div className="status-area">
+     {runtime?.status === 'degraded' && <p role="status" className="notice warn">Some answers may be unavailable right now. You can still describe your problem or ask for a person.</p>}
+     {runtime?.ai_requests_remaining != null && runtime.ai_requests_remaining <= 5 && <p role="status" className="notice">Demo AI allowance: {runtime.ai_requests_remaining} requests remaining. More usage needs owner authorization.</p>}
+     {pendingFix && <div className="pending-fix"><p>Your “No” is saved. Continue to the next step.</p><button type="button" disabled={busy} onClick={retryFix}>Retry next step</button></div>}
+     {error && <p role="alert" className="error">{error}{failed && ' Use Retry on your message to send it again.'}</p>}
+     {notice && <p role="status" className="notice">{notice}</p>}
+    </div>
+    <Composer text={text} busy={busy} onChange={setText} onSend={send}/>
+    <p className="disclaimer">Uses sample troubleshooting guides — not official TechSpot advice. Never share passwords or personal details.</p>
    </div>
-   <Composer text={text} busy={busy} onChange={setText} onSend={send}/>
-  </section>
+  </div>
  </main>;
 }

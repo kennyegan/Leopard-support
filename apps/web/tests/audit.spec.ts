@@ -21,7 +21,11 @@ test('new conversation wins over an in-flight restore', async ({page, request}) 
  await page.goto('/'); await seen;
  await expect(page.getByText('Restoring your conversation…')).toBeVisible();
  await page.getByRole('button', {name: 'New conversation'}).click();
- const finished = page.waitForResponse(`**/api/sessions/${id}`);
+ // The stale restore may complete or be cancelled; either way it must not win.
+ const finished = Promise.race([
+  page.waitForResponse(`**/api/sessions/${id}`),
+  page.waitForEvent('requestfailed', r => r.url().endsWith(`/api/sessions/${id}`)),
+ ]);
  release(); await finished;
  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
  await expect(page.locator('.message')).toHaveCount(0);

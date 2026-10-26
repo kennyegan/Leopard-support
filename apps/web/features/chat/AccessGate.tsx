@@ -1,8 +1,8 @@
 'use client';
 import {useEffect, useState} from 'react';
 import {api, readHealth, session, type Runtime} from '@/lib/api';
-import {LeopardMark} from '@/components/Icons';
-import {ChatWorkspace} from './ChatWorkspace';
+import {LeopardMark} from '@/components/LeopardMark';
+import {AppShell} from '@/features/shell/AppShell';
 
 type Status = 'loading' | 'waking' | 'ready' | 'login' | 'error';
 const wakeLimit = 120000;
@@ -60,12 +60,12 @@ export default function AccessGate() {
     if (r.ok) { localStorage.removeItem(session.key); window.location.reload(); }
    }}>Sign out</button>
   </div>}
-  <ChatWorkspace initialRuntime={runtime}/>
+  <AppShell initialRuntime={runtime}/>
  </>;
 
  return <main className="gate" id="main">
   <div className="gate-card">
-   <LeopardMark size={48}/>
+   <LeopardMark size={56} tile/>
    <h1>{runtime?.app_mode === 'pilot' ? 'Leopard Support private pilot' : 'Leopard Support'}</h1>
    {status === 'loading' && <p role="status"><span className="spinner" aria-hidden="true"/>Checking access…</p>}
    {status === 'waking' && <div role="status">

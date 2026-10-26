@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import {cookies} from 'next/headers';
 import {BookIcon, ExternalIcon} from '@/components/Icons';
+import {PageHeader} from '@/components/PageHeader';
 type Section={id:string;title:string;heading:string;section_text:string;steps:string[];source_url:string;corpus_version:string;is_synthetic:boolean;reference_links?:{title:string;url:string;checked_at:string}[];applicability:Record<string,string>};
 export default async function Source({params,searchParams}:{params:Promise<{id:string}>,searchParams:Promise<{version?:string;section?:string}>}){
  const {id}=await params;
@@ -12,9 +12,8 @@ export default async function Source({params,searchParams}:{params:Promise<{id:s
  let sections:Section[]=[];
  try{const r=await fetch(`${process.env.API_BASE_URL || "http://127.0.0.1:8000"}/api/guides/${encodeURIComponent(id)}?${sourceQuery}`,{cache:'no-store',headers:token?{Cookie:`__Host-techspot=${encodeURIComponent(token)}`}:{}});if(r.ok)sections=await r.json();}catch{}
  const first=sections[0];
- return <main className="document" id="main">
-  <Link href="/" className="back">← Back to chat</Link>
-  <div className="eyebrow"><BookIcon size={13}/> Synthetic source</div>
+ return <><PageHeader/><main className="document" id="main">
+  <p className="doc-kind"><BookIcon size={14}/> Synthetic source guide</p>
   {first? <>
    <h1>{first.title}</h1>
    <p>This fictional guide is for local demonstration only.</p>
@@ -26,5 +25,5 @@ export default async function Source({params,searchParams}:{params:Promise<{id:s
     <p className="applies">Applies to: {Object.entries(s.applicability).map(([k,v])=>`${k}: ${v}`).join(' · ') || 'General diagnostic checks; confirm they fit your situation.'}</p>
    </section>)}
   </>:<><h1>Source unavailable</h1><p>This synthetic guide could not be loaded. It may have been replaced by a newer version.</p></>}
- </main>;
+ </main></>;
 }

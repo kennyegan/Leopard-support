@@ -21,7 +21,12 @@ export type History = {
  feedback: {message_id: string; kind: string; value: string}[];
 };
 
+export type SavedSession = {id: string; title: string; updated_at: string; outcome: string | null};
+
 let csrfToken = '';
+// Supplies the signed-in user's ID token, or '' for guests.
+let accountToken: () => Promise<string> = async () => '';
+export function setAccountTokenProvider(provider: () => Promise<string>) { accountToken = provider; }
 let storageKey = 'techspot.demo.session';
 export const session = {
  get key() { return storageKey; },
@@ -45,9 +50,15 @@ export async function api<T>(path: string, init?: RequestInit & {timeout?: numbe
  const {timeout = 20000, ...rest} = init ?? {};
  let response: Response;
  try {
+  const token = await accountToken();
   response = await fetch(path, {
    ...rest,
-   headers: {'Content-Type': 'application/json', ...(csrfToken ? {'X-CSRF-Token': csrfToken} : {}), ...rest.headers},
+   headers: {
+    'Content-Type': 'application/json',
+    ...(csrfToken ? {'X-CSRF-Token': csrfToken} : {}),
+    ...(token ? {'X-Account-Token': token} : {}),
+    ...rest.headers,
+   },
    signal: rest.signal ?? AbortSignal.timeout(timeout),
   });
  } catch (e) {
@@ -78,3 +89,9 @@ export function outcomeLabel(r: Reply) {
  if (r.action === 'HANDOFF') return 'Let’s bring in a person';
  return r.request_type === 'install' ? 'Download and setup' : 'Guide-backed steps';
 }
+
+export const accountApi = {
+ sessions: () => api<SavedSession[]>('/api/account/sessions'),
+ claim: (id: string) => api<{claimed: boolean}>(`/api/sessions/${id}/claim`, {method: 'POST'}),
+ remove: (id: string) => api<{deleted: boolean}>(`/api/sessions/${id}`, {method: 'DELETE'}),
+};

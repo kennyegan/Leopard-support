@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     openrouter_zdr: bool = True
     retrieval_ranking: Literal["dense", "hybrid"] = "dense"
     embed_model_path: str = ""
+    # Firebase project used for optional demo sign-in; empty disables accounts.
+    firebase_project_id: str = ""
 
     def validate_pilot(self):
         if self.app_mode != "pilot":

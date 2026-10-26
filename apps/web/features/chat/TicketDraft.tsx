@@ -15,9 +15,8 @@ function fields(draft: string) {
 export function TicketDraft({draft, busy, supportEmail, onChange, onSave}: Props) {
  const summary = fields(draft);
  return <section className="ticket">
-  <div className="eyebrow">Review before sharing</div>
   <h2>Your editable ticket draft</h2>
-  <p>Nothing has been submitted. Check the details, remove anything personal, then copy it or email it to TechSpot.</p>
+  <p className="muted">Nothing has been submitted. Check the details and remove anything personal, then copy it or email it to TechSpot.</p>
   {summary.length > 0 && <dl className="ticket-summary">{summary.map(f => <div key={f.label}><dt>{f.label}</dt><dd>{f.value}</dd></div>)}</dl>}
   <label htmlFor="draft" className="sr-only">Ticket draft</label>
   <textarea id="draft" value={draft} maxLength={5000} rows={8} onChange={e => onChange(e.target.value)}/>
