@@ -386,3 +386,44 @@ def test_openrouter_remote_schema_failure_hands_off_and_counts_attempt(client, m
     assert not answer["sources"] and not answer["steps"]
     with connection() as conn:
         assert conn.execute("SELECT calls FROM provider_usage WHERE id=1").fetchone()["calls"] == 1
+
+
+def test_gemini_skips_overloaded_models_then_falls_back_offline(client, monkeypatch):
+    import httpx
+    from app import llm
+
+    cfg = settings()
+    for key, value in dict(
+        provider="gemini", allow_external_ai=True, gemini_api_key="test-key",
+        gemini_model="busy-model,slow-model", approved_external_corpus_version=cfg.corpus_version,
+        external_call_limit=1000, gemini_timeout=10,
+    ).items():
+        monkeypatch.setattr(cfg, key, value)
+    with connection() as conn:
+        usage = conn.execute("SELECT calls, authorized_limit FROM provider_usage WHERE id=1").fetchone()
+        conn.execute("UPDATE provider_usage SET calls=0, authorized_limit=1000 WHERE id=1")
+    tried = []
+
+    def overloaded(url, **kwargs):
+        model = url.split("/models/")[1].split(":")[0]
+        tried.append(model)
+        request = httpx.Request("POST", url)
+        if model == "busy-model":
+            raise httpx.HTTPStatusError("busy", request=request, response=httpx.Response(503, request=request))
+        raise httpx.ReadTimeout("slow", request=request)
+
+    monkeypatch.setattr(llm.httpx, "post", overloaded)
+    s = session(client)
+    # Without the fallback the failure stays visible, as research runs expect.
+    failed = message(client, s, "Wi-Fi isn't working.")
+    assert tried == ["busy-model", "slow-model"] and failed["provider"] == "gemini"
+    monkeypatch.setattr(cfg, "provider_fallback", True)
+    s = session(client)
+    answer = message(client, s, "Wi-Fi isn't working.")
+    assert answer["action"] == "ASK"
+    assert answer["provider"] == "scripted-offline fallback (gemini unavailable)"
+    with connection() as conn:
+        conn.execute(
+            "UPDATE provider_usage SET calls=%s, authorized_limit=%s WHERE id=1",
+            (usage["calls"], usage["authorized_limit"]),
+        )

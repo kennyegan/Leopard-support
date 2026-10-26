@@ -14,7 +14,11 @@ class Settings(BaseSettings):
     provider: str = "scripted"
     allow_external_ai: bool = False
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.1-flash-lite,gemini-3.5-flash-lite"
+    # Seconds to wait for Gemini; free-tier responses regularly take longer than 8s.
+    gemini_timeout: float = Field(default=25, ge=3, le=60)
+    # Public demos can answer with the offline interpreter when the AI provider fails.
+    provider_fallback: bool = False
     openrouter_api_key: str = ""
     openrouter_model: str = "google/gemini-2.5-flash"
     external_call_limit: int = 15

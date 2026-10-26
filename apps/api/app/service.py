@@ -4,7 +4,9 @@ import json
 from pydantic import ValidationError
 from psycopg.types.json import Jsonb
 from .config import settings, build_revision
-from .llm import ProviderError, explicit_human, explicit_stop, provider
+import logging
+
+from .llm import FallbackProvider, ProviderError, ScriptedProvider, explicit_human, explicit_stop, provider
 from .models import Decision, Interpretation, State, Guide
 from .policy import compatible, decide, discriminators
 from .privacy import redact, redact_values
@@ -225,6 +227,19 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
     conversational = settings().dialogue_mode == "conversational"
     active = load_active(conn, state) if conversational else None
     guides = []
+
+    def interpret():
+        nonlocal client
+        try:
+            return client.interpret(text, state)
+        except ProviderError:
+            # A public demo should keep helping while the AI provider is overloaded.
+            if settings().app_mode != "demo" or not settings().provider_fallback or isinstance(client, ScriptedProvider):
+                raise
+            logging.getLogger("techspot.llm").warning("provider_fallback provider=%s", client.name)
+            client = FallbackProvider(client.name)
+            return client.interpret(text, state)
+
     try:
         if interpretation_error is not None:
             raise interpretation_error
@@ -237,7 +252,7 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
                 else (
                     Interpretation(unsupported=True)
                     if settings().app_mode == "pilot" and explicit_stop(text)
-                    else Interpretation.model_validate(client.interpret(text, state))
+                    else Interpretation.model_validate(interpret())
                 )
             )
         )

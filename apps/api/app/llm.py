@@ -2,6 +2,8 @@
 
 from decimal import Decimal
 import json
+import logging
+import time
 import re
 import httpx
 from pydantic import Field, ValidationError
@@ -326,13 +328,37 @@ class GeminiProvider(StructuredProvider):
     name = "gemini"
 
     def call(self, prompt, schema):
+        """Try each configured model in turn within one time budget.
+
+        GEMINI_MODEL may list several models separated by commas. Overloaded (429/5xx) or slow
+        models are skipped, each earlier model getting at most half the budget; any other failure is final.
+        """
         s = settings()
-        reserve_external_call(s.gemini_api_key, s.gemini_model)
+        models = [m.strip() for m in s.gemini_model.split(",") if m.strip()]
+        deadline = time.monotonic() + s.gemini_timeout
+        for index, model in enumerate(models):
+            remaining = deadline - time.monotonic()
+            if remaining < 2:
+                break
+            last = index == len(models) - 1
+            reserve_external_call(s.gemini_api_key, model)
+            try:
+                return self.request(model, prompt, schema, remaining if last else min(remaining, s.gemini_timeout / 2))
+            except (httpx.TimeoutException, httpx.HTTPStatusError) as error:
+                retryable = isinstance(error, httpx.TimeoutException) or (
+                    error.response.status_code == 429 or error.response.status_code >= 500
+                )
+                if not retryable or last:
+                    raise ProviderError("Provider request or schema validation failed") from None
+        raise ProviderError("Provider request timed out", "provider_timeout")
+
+    def request(self, model, prompt, schema, timeout):
+        s = settings()
         try:
             response = httpx.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/{s.gemini_model}:generateContent",
+                f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                 headers={"x-goog-api-key": s.gemini_api_key},
-                timeout=8,
+                timeout=timeout,
                 json={
                     "systemInstruction": {
                         "parts": [
@@ -352,8 +378,36 @@ class GeminiProvider(StructuredProvider):
             )
             response.raise_for_status()
             return schema.model_validate_json(response.json()["candidates"][0]["content"]["parts"][0]["text"])
-        except Exception:
+        except Exception as error:
+            # Log the failure category only; never the key, prompt or response body.
+            status = getattr(getattr(error, "response", None), "status_code", None)
+            detail = ""
+            if status is not None:
+                try:
+                    body = error.response.json().get("error", {})
+                    detail = f'{body.get("status", "")}: {body.get("message", "")}'[:240]
+                except Exception:
+                    pass
+            finish = None
+            if isinstance(error, (KeyError, IndexError, ValidationError)):
+                try:
+                    finish = response.json()["candidates"][0].get("finishReason")
+                except Exception:
+                    pass
+            logging.getLogger("techspot.llm").warning(
+                "gemini_call_failed model=%s error=%s status=%s finish=%s detail=%s",
+                model, type(error).__name__, status, finish, detail,
+            )
+            if isinstance(error, (httpx.TimeoutException, httpx.HTTPStatusError)):
+                raise
             raise ProviderError("Provider request or schema validation failed") from None
+
+
+class FallbackProvider(ScriptedProvider):
+    """Answers with the offline interpreter when the external provider cannot."""
+
+    def __init__(self, failed):
+        self.name = f"scripted-offline fallback ({failed} unavailable)"
 
 
 class OpenRouterProvider(StructuredProvider):

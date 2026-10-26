@@ -26,8 +26,15 @@ services:
         value: "true"
       - key: GEMINI_API_KEY
         sync: false
+      # Tried in order; overloaded or slow models are skipped within GEMINI_TIMEOUT.
       - key: GEMINI_MODEL
-        value: gemini-2.5-flash
+        value: gemini-3.1-flash-lite,gemini-3.5-flash-lite
+      # Free-tier latency varies a lot; past this budget the offline interpreter answers.
+      - key: GEMINI_TIMEOUT
+        value: "12"
+      # Keep answering with the offline interpreter if Gemini is unavailable.
+      - key: PROVIDER_FALLBACK
+        value: "true"
       - key: DIALOGUE_MODE
         value: conversational
       - key: CORPUS_VERSION
