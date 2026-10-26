@@ -1,0 +1,41 @@
+# Render blueprint for the public demo API (free plan).
+# Secrets marked `sync: false` are entered in the Render dashboard, never committed.
+services:
+  - type: web
+    name: leopard-support-api
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./infra/api.Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/live
+    autoDeployTrigger: commit
+    envVars:
+      # The image defaults to pilot mode; the public demo runs in demo mode.
+      - key: APP_MODE
+        value: demo
+      - key: PORT
+        value: "8000"
+      - key: DATABASE_URL
+        sync: false
+      - key: WEB_ORIGIN
+        sync: false
+      - key: PROVIDER
+        value: gemini
+      - key: ALLOW_EXTERNAL_AI
+        value: "true"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: DIALOGUE_MODE
+        value: conversational
+      - key: CORPUS_VERSION
+        value: synthetic-2026-10-v3
+      - key: APPROVED_EXTERNAL_CORPUS_VERSION
+        value: synthetic-2026-10-v3
+      # Lifetime cap on external calls; also raise provider_usage.authorized_limit in the database.
+      - key: EXTERNAL_CALL_LIMIT
+        value: "2000"
+      - key: ADMIN_TOKEN
+        generateValue: true
