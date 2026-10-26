@@ -16,7 +16,7 @@ try {
  await page.reload();
  await page.getByLabel('Your message',{exact:true}).fill('Install AutoCAD on Windows using education access');
  const first=page.waitForResponse(r=>/\/api\/sessions\/[^/]+\/messages$/.test(r.url())&&r.request().method()==='POST');
- await page.getByRole('button',{name:'Send ↗',exact:true}).click();
+ await page.getByRole('button',{name:'Send',exact:true}).click();
  const response=await first;assert.equal(response.status(),200);
  const a=await response.json();assert.equal(a.state.active_node,'check-1');
  const second=page.waitForResponse(r=>/\/api\/sessions\/[^/]+\/messages$/.test(r.url())&&r.request().method()==='POST');

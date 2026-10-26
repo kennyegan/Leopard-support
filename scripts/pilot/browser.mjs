@@ -44,7 +44,7 @@ try{
  for(const text of ['I need to download Autodesk','AutoCAD on Windows for a student','yes','Download complete','Installed and opens']){
   await alice.page.getByLabel('Your message',{exact:true}).fill(text);
   const response=alice.page.waitForResponse(r=>/\/api\/sessions\/[^/]+\/messages$/.test(r.url())&&r.request().method()==='POST');
-  await alice.page.getByRole('button',{name:'Send ↗',exact:true}).click();
+  await alice.page.getByRole('button',{name:'Send',exact:true}).click();
   const r=await response;
   assert.equal(r.status(),200,await r.text());steps.push(await r.json());
   sid=await alice.page.evaluate(key=>localStorage.getItem(key),storageKey);
@@ -83,7 +83,7 @@ try{
  evidence.checks.push('browser refresh restores owned conversation');
  await alice.context.grantPermissions(['clipboard-read','clipboard-write']);
  await alice.page.getByLabel('Your message',{exact:true}).fill('I would like to speak to a person');
- await alice.page.getByRole('button',{name:'Send ↗',exact:true}).click();
+ await alice.page.getByRole('button',{name:'Send',exact:true}).click();
  await alice.page.getByLabel('Ticket draft',{exact:true}).waitFor();
  const edited='Synthetic qualification ticket: please review the completed installation.';
  await alice.page.getByLabel('Ticket draft',{exact:true}).fill(edited);

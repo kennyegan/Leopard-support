@@ -12,6 +12,12 @@
 !apps/web/app/**
 !apps/web/public/
 !apps/web/public/**
+!apps/web/features/
+!apps/web/features/**
+!apps/web/components/
+!apps/web/components/**
+!apps/web/lib/
+!apps/web/lib/**
 !apps/web/package.json
 !apps/web/package-lock.json
 !apps/web/tsconfig.json

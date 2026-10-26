@@ -3,7 +3,7 @@ import {test,expect} from '@playwright/test';
 test('ASK → ANSWER, source viewer, feedback and persistence',async({page,context})=>{
  await context.grantPermissions(['clipboard-read','clipboard-write']);
  await page.goto('/');
- await expect(page.getByText('DEMO — synthetic troubleshooting guides; not official TechSpot advice')).toBeVisible();
+ await expect(page.getByText('Demo · Uses sample troubleshooting guides — not official TechSpot advice')).toBeVisible();
  await page.getByRole('button',{name:"Wi-Fi isn't working."}).click();
  await expect(page.getByText('Which operating system are you using?')).toBeVisible();
  await page.locator('#message').fill('macOS on demo-campus with a demo credential error');
@@ -50,6 +50,7 @@ test('No twice produces handoff without repeating a guide',async({page})=>{
 
 test('baseline, mobile layout and service error state',async({page})=>{
  await page.setViewportSize({width:390,height:844});await page.goto('/');
+ await page.getByText('Research settings').click();
  await page.getByLabel('Research mode').selectOption('baseline');
  await page.getByRole('button',{name:"Wi-Fi isn't working."}).click();
  await expect(page.getByText('Guide-backed steps')).toBeVisible();

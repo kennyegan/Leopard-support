@@ -5,7 +5,7 @@ test.skip(process.env.CONVERSATION_E2E !== '1', 'Separate conversational-mode ac
 async function send(page: Page, text: string) {
  const response = page.waitForResponse(r => /\/api\/sessions\/[^/]+\/messages$/.test(r.url()) && r.request().method() === 'POST');
  await page.getByLabel('Your message', {exact:true}).fill(text);
- await page.getByRole('button', {name:'Send ↗'}).click();
+ await page.getByRole('button', {name:'Send',exact:true}).click();
  const result = await (await response).json();
  await expect(page.locator('.message.assistant').last()).toContainText(result.text);
  return result;

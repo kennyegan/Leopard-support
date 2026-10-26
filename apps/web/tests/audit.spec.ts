@@ -55,7 +55,8 @@ test('lost POST response retries once without another question or snapshot', asy
  });
  await send(page, "Wi-Fi isn't working.");
  await expect(page.locator('.error[role="alert"]')).toContainText('unavailable');
- await page.getByRole('button', {name: 'Send'}).click();
+ await expect(page.locator('.message.user.failed')).toContainText("Wi-Fi isn't working.");
+ await page.getByRole('button', {name: 'Retry', exact: true}).click();
  await expect(page.getByText('Which operating system are you using?')).toBeVisible();
  const id = await page.evaluate(() => localStorage.getItem('techspot.demo.session'));
  const history = await (await request.get(`/api/sessions/${id}`)).json();

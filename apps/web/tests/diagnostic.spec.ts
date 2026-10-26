@@ -6,7 +6,7 @@ test.setTimeout(120000);
 async function send(page:Page,text:string) {
  const response=page.waitForResponse(r=>/\/api\/sessions\/[^/]+\/messages$/.test(r.url())&&r.request().method()==='POST');
  await page.getByLabel('Your message',{exact:true}).fill(text);
- await page.getByRole('button',{name:'Send ↗'}).click();
+ await page.getByRole('button',{name:'Send',exact:true}).click();
  const result=await (await response).json();
  await expect(page.locator('.message.assistant').last()).toContainText(result.text);
  expect(result.response_kind).not.toBe('service_error');
@@ -76,7 +76,7 @@ test('exact reported detour and blocked access have useful outcomes',async({page
   expect(r.sources.some((s:{id:string})=>s.id.startsWith('general-app'))).toBe(false);
  }
  await expect(page.getByRole('link',{name:/Autodesk Education/}).first()).toBeVisible();
- await page.getByRole('button',{name:'＋ New conversation'}).click();
+ await page.getByRole('button',{name:'New conversation'}).click();
  trace.push(await send(page,'I need to download AutoCAD on Windows for a student'));
  trace.push(await send(page,'Access not approved'));
  expect(trace.at(-1).rule).toBe('step_blocked');

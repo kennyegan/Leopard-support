@@ -7,7 +7,7 @@ async function send(page: Page, text: string) {
   const response = page.waitForResponse(r =>
     /\/api\/sessions\/[^/]+\/messages$/.test(r.url()) && r.request().method() === 'POST');
   await page.getByLabel('Your message', {exact: true}).fill(text);
-  await page.getByRole('button', {name: 'Send ↗'}).click();
+  await page.getByRole('button', {name: 'Send', exact: true}).click();
   const result = await (await response).json();
   await expect(page.locator('.message.assistant').last()).toContainText(result.text);
   expect(result.response_kind).not.toBe('service_error');

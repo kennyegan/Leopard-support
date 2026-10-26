@@ -30,7 +30,7 @@ try:
         )
     )
     print(
-        "TechSpot Assist: http://127.0.0.1:3000 — synthetic demo; interpreter configuration at /api/health",
+        "Leopard Support: http://127.0.0.1:3000 — synthetic demo; interpreter configuration at /api/health",
         flush=True,
     )
     while all(p.poll() is None for p in processes):
