@@ -16,12 +16,12 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.0",
+    "@playwright/test": "^1.56.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "eslint": "^9.0.0",
-    "eslint-config-next": "^16.0.0",
-    "@playwright/test": "^1.56.0"
+    "eslint-config-next": "^16.4.3",
+    "typescript": "^5.9.0"
   }
 }
