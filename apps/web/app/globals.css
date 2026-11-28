@@ -372,3 +372,9 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
 }
+
+.citation-evidence { margin-block: 1rem; color: var(--muted, #555); font-size: .9rem; }
+.citation-evidence summary { cursor: pointer; padding-block: .5rem; }
+.citation-evidence blockquote { margin: .75rem 0; padding: .25rem 1rem; border-left: 3px solid currentColor; }
+.citation-evidence blockquote p { margin-block: .35rem; }
+.citation-evidence cite { font-style: normal; }

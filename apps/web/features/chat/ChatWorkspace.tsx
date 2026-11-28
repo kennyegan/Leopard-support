@@ -52,7 +52,9 @@ export function ChatWorkspace({runtime, mode, onRuntime, onModeRestored, onSessi
     const s = await api<History>(`/api/sessions/${id}`, {signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)])});
     if (generation.current !== current || controller.signal.aborted) return;
     setSession(s.id); onSession(s.id); onModeRestored(s.mode); setMessages(s.messages);
-    setTicket(s.state.outcome === 'handoff' ? s.ticket : null); setDraft(s.ticket?.draft || '');
+    const lastReply = s.messages.filter(m => m.role === 'assistant').at(-1)?.response;
+    const visibleTicket = s.state.outcome === 'handoff' || (s.ticket && lastReply?.ticket?.id === s.ticket.id);
+    setTicket(visibleTicket ? s.ticket : null); setDraft(s.ticket?.draft || '');
     setRatings(Object.fromEntries(s.feedback.map(f => [`${f.message_id}-${f.kind}`, f.value])));
     if (s.state.pending_failure) setPendingFix(s.messages.filter(m => m.role === 'assistant').at(-1)?.id ?? null);
    } catch (e) {
@@ -95,7 +97,11 @@ export function ChatWorkspace({runtime, mode, onRuntime, onModeRestored, onSessi
     const rest = previous.filter(m => m.id !== placeholder);
     return rest.some(m => m.id === r.id) ? rest : [...rest, r.user_message, {id: r.id, role: 'assistant', text: r.text, response: r}];
    });
-   if (r.ticket) { setTicket(r.ticket); setDraft(r.ticket.draft); }
+   if (r.ticket) {
+    const editingSameDraft = ticket?.id === r.ticket.id && draft !== ticket.draft;
+    setTicket(r.ticket);
+    if (!editingSameDraft) setDraft(r.ticket.draft);
+   }
    else if (r.state.outcome !== 'handoff') { setTicket(null); setDraft(''); }
    setPendingFix(null);
    onTurn();
@@ -181,7 +187,7 @@ export function ChatWorkspace({runtime, mode, onRuntime, onModeRestored, onSessi
      <h1 id="welcome-title">What’s getting in your way?</h1>
      <p>Describe the problem in your own words: what you see and on which device. I’ll find the right TechSpot guide, ask one quick question if something’s missing, or draft a ticket when you need a person.</p>
      <div className="starters" role="group" aria-label="Try one of these">
-      {starters.map(s => <button type="button" key={s} onClick={() => send(s)} disabled={busy}>{s}</button>)}
+      {(runtime?.synthetic === false ? ["Wi-Fi isn't working.", 'How do I connect my device?', 'I want to talk to TechSpot staff.'] : starters).map(s => <button type="button" key={s} onClick={() => send(s)} disabled={busy}>{s}</button>)}
      </div>
     </section>}
     <div className="messages" aria-live="polite" aria-relevant="additions">
@@ -211,7 +217,7 @@ export function ChatWorkspace({runtime, mode, onRuntime, onModeRestored, onSessi
      {notice && <p role="status" className="notice">{notice}</p>}
     </div>
     <Composer text={text} busy={busy} onChange={setText} onSend={send}/>
-    <p className="disclaimer">Uses sample troubleshooting guides — not official TechSpot advice. Never share passwords or personal details.</p>
+    <p className="disclaimer">{runtime?.synthetic === false ? 'Answers use reviewed campus documentation. Check the cited sources.' : 'Uses sample troubleshooting guides — not official TechSpot advice.'} Never share passwords or personal details.</p>
    </div>
   </div>
  </main>;

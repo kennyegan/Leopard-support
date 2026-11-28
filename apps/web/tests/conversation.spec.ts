@@ -31,7 +31,7 @@ test('freeform troubleshooting, explanations, source, resolution and refresh', a
  expect(href).toContain('/sources/general-wifi');
  const newPage = await page.context().newPage();
  await newPage.goto(href!);
- await expect(newPage.locator('main')).toContainText(/synthetic/i);
+ await expect(newPage.getByRole('main')).toContainText(/synthetic/i);
  await newPage.close();
  trace.push(await send(page, 'What does the first step mean?'));
  expect(trace.at(-1).response_kind).toBe('explanation');

@@ -1,8 +1,9 @@
 export type Runtime = {
  provider: string; external_ai_enabled: boolean; ai_requests_remaining?: number | null; app_mode?: string;
  support_contact?: string; qualification_only?: boolean; status?: string; sections?: number;
+ synthetic?: boolean; agent_mode?: 'guided' | 'grounded';
 };
-export type Source = {id: string; title: string; href: string; corpus_version: string; score: number};
+export type Source = {id: string; section_id?: string; title: string; href: string; corpus_version: string; score: number; is_synthetic?: boolean};
 export type Ticket = {id: string; draft: string; edited: boolean};
 export type Reply = {
  id: string; snapshot_id: string; action: 'ANSWER' | 'ASK' | 'HANDOFF'; text: string;
@@ -11,6 +12,7 @@ export type Reply = {
  response_kind?: string; request_type?: string;
  progress?: {current: number; total: number; kind: string; prompt: string} | null;
  references?: {title: string; url: string; checked_at: string}[];
+ grounding?: {text: string; citations: {section_id: string; quote: string}[]}[];
  state: {outcome: string; problem_id: string; details?: {system_or_app?: string; vendor?: string; os?: string}};
 };
 // `failed` marks a message the server never confirmed; it only exists in the browser.
@@ -84,9 +86,9 @@ export function outcomeLabel(r: Reply) {
  if (r.response_kind === 'check') return 'Let’s check one thing';
  if (r.response_kind === 'service_error') return 'Assistant unavailable';
  if (r.response_kind === 'status') return r.state.outcome === 'resolved' ? 'Resolved' : 'Progress update';
- if (r.response_kind === 'explanation') return 'Let’s clarify';
+ if (r.response_kind === 'explanation') return r.grounding?.length ? 'From the documentation' : 'Let’s clarify';
  if (r.action === 'ASK') return 'A quick question';
- if (r.action === 'HANDOFF') return 'Let’s bring in a person';
+ if (r.action === 'HANDOFF') return 'Support draft prepared';
  return r.request_type === 'install' ? 'Download and setup' : 'Guide-backed steps';
 }
 

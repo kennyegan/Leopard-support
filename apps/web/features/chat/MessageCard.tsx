@@ -36,11 +36,20 @@ export function MessageCard({message: m, latest, busy, ratings, showProvider, on
     <p>{r.progress.prompt}</p>
    </div>}
    {(r.sources.length > 0 || !!r.references?.length) && <div className="sources">
-    {r.sources.map(s => <Link className="source" key={s.id} href={s.href} target="_blank">
-     <BookIcon/><span>{s.title}<small>Sample TechSpot guide · {s.id}</small></span><ExternalIcon/><span className="sr-only">(opens in a new tab)</span></Link>)}
+    {r.sources.map((s, i) => <Link className="source" key={s.section_id || s.id} href={s.href} target="_blank">
+     <BookIcon/><span>{r.grounding?.length ? `[${i + 1}] ` : ''}{s.title}<small>{s.is_synthetic === false ? 'Campus documentation' : 'Sample TechSpot guide'}</small></span><ExternalIcon/><span className="sr-only">(opens in a new tab)</span></Link>)}
     {r.references?.map(ref => <a className="official-reference" key={ref.url} href={ref.url} target="_blank" rel="noopener noreferrer">
      <ExternalIcon/><span>{ref.title}<small>Official vendor site</small></span><span className="sr-only">(opens in a new tab)</span></a>)}
    </div>}
+   {!!r.grounding?.length && <details className="citation-evidence">
+    <summary>Supporting passages</summary>
+    {r.grounding.flatMap(statement => statement.citations).map((citation, i) => {
+     const source = r.sources.find(s => s.section_id === citation.section_id);
+     return <blockquote key={`${citation.section_id}-${i}`}><p>{citation.quote}</p>
+      {source && <cite><Link href={source.href} target="_blank">{source.title}<span className="sr-only"> (opens in a new tab)</span></Link></cite>}
+     </blockquote>;
+    })}
+   </details>}
    {r.options.length > 0 && <div className="quick-replies" role="group" aria-label="Suggested replies">
     {r.options.map(o => <button type="button" disabled={busy || !latest} onClick={() => onReply(o)} key={o}>{o}</button>)}
    </div>}

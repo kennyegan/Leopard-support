@@ -41,7 +41,7 @@ export default function Team() {
     <div className="stat"><b>{stats.sessions}</b><span>Conversations</span></div>
     <div className="stat"><b>{stats.questions}</b><span>Follow-up questions</span></div>
     <div className="stat"><b>{count(stats.outcomes, 'outcome', 'resolved')}</b><span>Resolved</span></div>
-    <div className="stat"><b>{count(stats.outcomes, 'outcome', 'handoff')}</b><span>Handed to a person</span></div>
+    <div className="stat"><b>{count(stats.outcomes, 'outcome', 'handoff')}</b><span>Support drafts prepared</span></div>
    </div>
    <h2>Decisions</h2><Table caption="Decisions by action" rows={stats.decisions} columns={['Action']}/>
    <h2>Outcomes</h2><Table caption="Conversation outcomes" rows={stats.outcomes} columns={['Outcome']}/>
