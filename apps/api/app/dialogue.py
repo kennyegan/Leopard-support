@@ -5,6 +5,8 @@ from .privacy import redact
 from .config import settings
 
 QUESTIONS = {
+    "affected_scope": "Does this happen on one device, several devices, or only one app?",
+    "vendor": "Which software vendor or publisher is named? It is fine if you are not sure.",
     "license_route": "Are you using education access, an existing license or assigned access, or a trial? It is fine if you are not sure.",
     "category": "Tell me what is happening and what you expected to happen.",
     "symptom": "What happens when you try—does it fail to connect, disconnect later, or show an error?",
@@ -68,6 +70,8 @@ def safe_prose(text):
 
 
 def wording(decision, extracted, state):
+    if decision.rule == "untried_suggestion":
+        return "Take your time. When you have checked, tell me what you find."
     if decision.rule == "graph_intake":
         return decision.question
     if decision.rule == "installation_wait":

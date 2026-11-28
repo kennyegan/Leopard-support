@@ -1,3 +1,5 @@
+from dataclasses import dataclass, field
+from fastapi import HTTPException
 from uuid import uuid4
 import hashlib
 import json
@@ -5,16 +7,47 @@ from pydantic import ValidationError
 from psycopg.types.json import Jsonb
 from .config import settings, build_revision
 import logging
+import re
 
-from .llm import FallbackProvider, ProviderError, ScriptedProvider, explicit_human, explicit_stop, provider
+from .llm import (
+    FallbackProvider,
+    ProviderError,
+    ScriptedProvider,
+    explicit_human,
+    local_interpretation,
+    provider,
+)
 from .models import Decision, Interpretation, State, Guide
 from .policy import compatible, decide, discriminators
-from .knowledge import ACCESS_SQL, access_params, audiences_for
 from .privacy import redact, redact_values
 from .retrieval import corpus_version, retrieve, load_guide, load_active
-from .dialogue import wording as conversation_wording
+from .dialogue import QUESTIONS, wording as conversation_wording
 from .skills import troubleshooting_skill
 from .workflow import advance, clear_workflow, contextual_reply, relevant_to_task
+from .knowledge import ACCESS_SQL, access_params, audiences_for
+from .evidence import admit_facts, verify_memory
+from .grounding import reading_material, validate_answer
+
+
+def reported_step(step, text):
+    # A model may select a reported action, but the words must come from its user turn.
+    if not step.strip():
+        return False
+    for match in re.finditer(r"(?<!\w)" + re.escape(step.strip()) + r"(?!\w)", text, re.I):
+        prefix = re.split(r"[.!?;,]|\bbut\b", text[: match.start()], flags=re.I)[-1]
+        lead = (prefix + " " + step).strip().replace("’", "'")
+        if re.search(
+            r"\b(?:did not|didn't|haven't|have not|never|going to|about to|should I|what if)\s+(?:try\s+)?$",
+            prefix.strip(),
+            re.I,
+        ):
+            continue
+        if re.match(
+            r"(?:I )?(?:did not|didn't|haven't|have not|never|will|might|plan to|am going to)\b", lead, re.I
+        ):
+            continue
+        return True
+    return False
 
 
 def failed_attempt(state):
@@ -23,14 +56,31 @@ def failed_attempt(state):
         state.failures += 1
         if state.last_guide and state.last_guide not in state.attempted_guides:
             state.attempted_guides.append(state.last_guide)
-        state.steps_tried = list(dict.fromkeys(state.steps_tried + state.last_steps))
     state.pending_failure = False
+
+
+def restore_issue(state, alias, evidence, text):
+    saved = state.issue_choices().get(alias)
+    if not saved or len(evidence.split()) < 2 or evidence.strip().casefold() not in text.casefold():
+        return None
+    restored = State.model_validate(saved)
+    restored.suspended_problems = [
+        p for p in state.suspended_problems if p["problem_id"] != restored.problem_id
+    ]
+    if state.problem_text and state.outcome != "resolved":
+        restored.suspended_problems.append(state.model_dump(exclude={"suspended_problems"}))
+    restored.knowledge_audiences = state.knowledge_audiences
+    restored.awaiting_issue_choice = False
+    return restored
 
 
 def merge(state, extracted, text):
     conversational = settings().dialogue_mode == "conversational"
-    if conversational and extracted.intent in ("thanks", "greeting") and (
-        extracted.step_result != "unknown" or extracted.outcome != "unknown"
+    audiences = state.knowledge_audiences
+    if (
+        conversational
+        and extracted.intent in ("thanks", "greeting")
+        and (extracted.step_result != "unknown" or extracted.outcome != "unknown")
     ):
         # Substantive progress takes precedence over a polite acknowledgement.
         extracted.intent = "support"
@@ -73,7 +123,10 @@ def merge(state, extracted, text):
             and not continuing_failure
         )
     ):
-        state = State(problem_text=text)
+        suspended = state.suspended_problems[:]
+        if settings().agent_mode == "grounded" and state.problem_text and state.outcome != "resolved":
+            suspended.append(state.model_dump(exclude={"suspended_problems"}))
+        state = State(problem_text=text, suspended_problems=suspended[-3:], knowledge_audiences=audiences)
     workflow_context = conversational and bool(state.active_guide)
     if extracted.request_type and conversational and not meta_reply:
         if extracted.request_type != state.request_type:
@@ -128,7 +181,7 @@ def merge(state, extracted, text):
         state.outcome = "open"
     state.details = state.details.model_copy(update=updates)
     state.steps_tried = list(
-        dict.fromkeys(state.steps_tried + [redact(s)[:300] for s in extracted.steps_tried])
+        dict.fromkeys(state.steps_tried + [s for s in extracted.steps_tried if reported_step(s, text)])
     )
     state.uncertainties = [redact(x)[:300] for x in extracted.uncertainties]
     if conversational:
@@ -145,6 +198,10 @@ def merge(state, extracted, text):
             state.problem_text = redact(extracted.summary)
         if state.outcome == "handoff":
             state.outcome = "open"
+    if not workflow_context and not meta_reply and extracted.observation:
+        state.observations = list(dict.fromkeys(state.observations + [redact(extracted.observation)[:300]]))[
+            -20:
+        ]
     if workflow_context and not meta_reply:
         if state.active_graph and state.pending_failure and extracted.step_result == "unknown":
             extracted.step_result = "failed"
@@ -164,7 +221,8 @@ def merge(state, extracted, text):
 
 def ticket_text(state):
     details = "\n".join(f"{key}: {value}" for key, value in state.details.model_dump().items() if value)
-    return redact(f"""DEMO ticket draft — not submitted
+    label = "Support ticket draft" if settings().app_mode == "pilot" else "DEMO ticket draft"
+    return redact(f"""{label} — not submitted
 Summary: {state.problem_text}
 Category: {state.category or "unknown"}
 Request: {state.request_type}
@@ -187,8 +245,61 @@ def ensure_ticket(conn, session_id, state):
     return {"id": str(row["id"]), "draft": row["draft_redacted"], "edited": row["edited"]}
 
 
-def prepare_state(conn, session):
+def verified_session_state(conn, session):
     state = State.model_validate(session["state"])
+    if settings().agent_mode == "grounded":
+        messages = {
+            str(row["id"]): row["text_redacted"]
+            for row in conn.execute(
+                "SELECT id,text_redacted FROM messages WHERE session_id=%s AND role='user'", (session["id"],)
+            ).fetchall()
+        }
+        attempts = {}
+        for row in conn.execute(
+            """SELECT s.state_json->>'problem_id' AS issue, s.interpretation->'steps_tried' AS steps,
+                      m.response->'user_message'->>'id' AS user_message
+               FROM state_snapshots s JOIN messages m ON m.id=s.message_id
+               WHERE s.session_id=%s AND jsonb_array_length(s.interpretation->'steps_tried')>0""",
+            (session["id"],),
+        ):
+            source = messages.get(row["user_message"], "")
+            attempts.setdefault(row["issue"], set()).update(
+                s for s in row["steps"] if reported_step(s, source)
+            )
+        for previous in state.suspended_problems:
+            previous["steps_tried"] = [
+                s for s in previous.get("steps_tried", []) if s in attempts.get(previous["problem_id"], ())
+            ]
+        state.steps_tried = [s for s in state.steps_tried if s in attempts.get(state.problem_id, ())]
+        state = verify_memory(state, messages)
+        state.suspended_problems = [
+            verify_memory(State.model_validate(item), messages).model_dump(exclude={"suspended_problems"})
+            for item in state.suspended_problems
+        ]
+    return state
+
+
+def saved_draft(conn, session_id, state):
+    row = conn.execute(
+        "SELECT id,draft_redacted AS draft,edited FROM tickets WHERE session_id=%s AND problem_id=%s",
+        (session_id, state.problem_id),
+    ).fetchone()
+    if not row:
+        return None
+    draft = row["draft"]
+    if settings().agent_mode == "grounded" and not row["edited"]:
+        # Earlier releases copied every displayed instruction into this line.
+        # Keep the saved contents and limit the attempt list to verified reports.
+        prefix, marker, rest = draft.rpartition("\nAttempted steps: ")
+        attempts, footer, tail = rest.partition("\nGuide IDs: ")
+        if marker and footer:
+            reported = [s for s in state.steps_tried if s in attempts]
+            draft = prefix + marker + ("; ".join(reported) or "None reported") + footer + tail
+    return {"id": str(row["id"]), "draft": draft, "edited": row["edited"]}
+
+
+def prepare_state(conn, session):
+    state = verified_session_state(conn, session)
     if settings().app_mode == "pilot" and session.get("owner_id"):
         owner = conn.execute(
             "SELECT i.knowledge_audiences FROM pilot_users u JOIN pilot_invites i ON i.email=u.email WHERE u.id=%s AND i.active",
@@ -225,11 +336,13 @@ def prepare_state(conn, session):
     return state
 
 
-def turn(conn, session, text, *, prepared=None, interpretation=None, interpretation_error=None):
+def plan_turn(
+    conn, session, text, *, prepared=None, interpretation=None, interpretation_error=None, client=None
+):
     text = redact(text.strip())
     state = prepared if prepared is not None else prepare_state(conn, session)
     user_message = dict(id=str(uuid4()), role="user", text=text)
-    client = provider()
+    client = client or provider()
     conversational = settings().dialogue_mode == "conversational"
     active = load_active(conn, state) if conversational else None
     guides = []
@@ -240,7 +353,11 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
             return client.interpret(text, state)
         except ProviderError:
             # A public demo should keep helping while the AI provider is overloaded.
-            if settings().app_mode != "demo" or not settings().provider_fallback or isinstance(client, ScriptedProvider):
+            if (
+                settings().app_mode != "demo"
+                or not settings().provider_fallback
+                or isinstance(client, ScriptedProvider)
+            ):
                 raise
             logging.getLogger("techspot.llm").warning("provider_fallback provider=%s", client.name)
             client = FallbackProvider(client.name)
@@ -249,22 +366,76 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
     try:
         if interpretation_error is not None:
             raise interpretation_error
-        extracted = (
-            interpretation
-            if interpretation is not None
-            else (
-                Interpretation(requested_human=True)
-                if conversational and explicit_human(text)
-                else (
-                    Interpretation(unsupported=True)
-                    if settings().app_mode == "pilot" and explicit_stop(text)
-                    else Interpretation.model_validate(interpret())
-                )
-            )
-        )
+        extracted = interpretation
+        if extracted is None and conversational:
+            extracted = local_interpretation(text, state)
+        if extracted is None:
+            extracted = Interpretation.model_validate(interpret())
         # Revalidate and redact provider-returned strings before any storage.
         extracted = Interpretation.model_validate(redact_values(extracted.model_dump()))
+        uncertain = {}
+        if settings().agent_mode == "grounded":
+            labels = state.resume_options()
+            selected = labels.get(text) if state.awaiting_issue_choice else None
+            resume = selected or extracted.resume_problem_id
+            if (
+                resume
+                or extracted.intent == "resume"
+                or extracted.resume_evidence
+                or state.awaiting_issue_choice
+            ):
+                if state.awaiting_issue_choice and text == "Continue current issue":
+                    state.awaiting_issue_choice = False
+                    return status_plan(
+                        state, user_message, client, extracted, "issue_current", issue_recap(state)
+                    )
+                restored = restore_issue(state, resume, text if selected else extracted.resume_evidence, text)
+                if restored is None:
+                    state.awaiting_issue_choice = True
+                    decision = Decision(
+                        action="ASK",
+                        rule="choose_issue",
+                        response_kind="question",
+                        options=[*labels, "Continue current issue"],
+                    )
+                    return TurnPlan(
+                        state,
+                        user_message,
+                        client,
+                        extracted,
+                        decision,
+                        None,
+                        [],
+                        "Which issue should we continue?",
+                        None,
+                    )
+                state = restored
+                if selected or extracted.intent in ("explain", "resume") and not extracted.requested_human:
+                    return status_plan(
+                        state, user_message, client, extracted, "issue_resumed", issue_recap(state)
+                    )
+                extracted.new_problem = False
+                extracted.category = state.category
+                extracted.request_type = state.request_type
+                active = load_active(conn, state)
+                if active:
+                    state.active_workflow = [node.model_dump() for node in active.workflow]
+                    state.active_graph = bool(active.workflow_version)
+            if extracted.intent in ("draft_status", "draft_contents", "attempt_history") and not (
+                extracted.requested_human or extracted.unsupported
+            ):
+                return status_plan(state, user_message, client, extracted, extracted.intent, "")
+            extracted, uncertain = admit_facts(extracted, text)
         state = merge(state, extracted, text)
+        active = load_active(conn, state) if conversational else None
+        if active:
+            state.active_workflow = [step.model_dump() for step in active.workflow]
+            state.active_graph = bool(active.workflow_version)
+        if settings().agent_mode == "grounded":
+            state.uncertain_facts.update(uncertain)
+            for field, value in extracted.details.model_dump().items():
+                if value is not None:
+                    state.uncertain_facts.pop(field, None)
         if (
             active
             and active.workflow_version
@@ -272,15 +443,23 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
             and (not compatible(active, state) or not relevant_to_task(active, state))
         ):
             clear_workflow(state)
-        if settings().app_mode == "pilot":
+        if settings().app_mode == "pilot" or settings().agent_mode == "grounded":
             for field, value in extracted.details.model_dump().items():
                 if value is not None and getattr(state.details, field) == value:
                     prior = state.facts.get(field)
-                    if prior and prior["value"] == value:
+                    if (
+                        prior
+                        and prior["value"] == value
+                        and (
+                            settings().agent_mode != "grounded"
+                            or (prior.get("status") == "reported" and prior.get("evidence"))
+                        )
+                    ):
                         continue
                     state.facts[field] = dict(
                         value=value,
                         status="reported",
+                        evidence=next((e.quote for e in extracted.detail_evidence if e.field == field), ""),
                         message_id=user_message["id"],
                         previous=(
                             {k: prior[k] for k in ("value", "message_id")}
@@ -306,7 +485,7 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
             active=active if state.active_guide else None,
         )
         guide = next((g for g in guides if g.id == decision.guide_id), None)
-        if not guide and active and active.id == decision.guide_id:
+        if active and active.id == decision.guide_id and state.active_guide:
             guide = active
         if guide and guide not in guides:
             guides.append(guide)
@@ -328,8 +507,22 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
             )
             if settings().app_mode != "pilot":
                 guide = guide or load_guide(conn, state.last_guide)
+            if guide and settings().app_mode == "pilot":
+                guide = load_guide(
+                    conn,
+                    guide.source_id,
+                    version=guide.corpus_version,
+                    section_id=guide.id,
+                    audiences=state.knowledge_audiences,
+                )
             if guide and not compatible(guide, state):
                 guide = None
+            if not guide:
+                decision = Decision(action="HANDOFF", rule="source_unavailable")
+        if guide:
+            # A section ID can exist in several immutable corpus versions. Keep
+            # the pinned version unambiguous in both model evidence and citations.
+            guides = [g for g in guides if g.id != guide.id] + [guide]
         wording = (
             conversation_wording(decision, extracted, state)
             if conversational
@@ -353,6 +546,147 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
                 if getattr(error, "code", "") == "budget_exhausted"
                 else "The assistant couldn't interpret that message right now. Your message is saved. Please retry shortly; this service problem doesn't mean your issue requires a technician."
             )
+    return TurnPlan(state, user_message, client, extracted, decision, guide, guides, wording, active)
+
+
+@dataclass
+class TurnPlan:
+    state: State
+    user_message: dict
+    client: object
+    extracted: Interpretation
+    decision: Decision
+    guide: Guide | None
+    guides: list[Guide]
+    wording: str
+    active: Guide | None
+    grounding: list[dict] = field(default_factory=list)
+    cited_guides: list[Guide] = field(default_factory=list)
+    grounded_attempted: bool = False
+    grounding_error: str | None = None
+
+
+def status_plan(state, message, client, extracted, rule, answer):
+    decision = Decision(action="ANSWER", rule=rule, response_kind="status")
+    return TurnPlan(state, message, client, extracted, decision, None, [], answer, None)
+
+
+def issue_recap(state):
+    details = ", ".join(str(v) for v in state.details.model_dump().values() if v)
+    topic = {"wifi_network": "Wi-Fi", "account_login": "account login"}.get(
+        state.category, state.category or "support"
+    )
+    recap = f"Continuing the {topic} issue."
+    if details:
+        recap += " Reported details: " + details + "."
+    if state.steps_tried:
+        recap += " You reported: " + "; ".join(state.steps_tried).rstrip(".") + "."
+    if state.observations:
+        recap += " Last update: " + state.observations[-1]
+    return recap
+
+
+def ground_plan(plan):
+    if plan.grounded_attempted:
+        return
+    plan.grounded_attempted = True
+    if settings().agent_mode != "grounded" or plan.decision.action != "ANSWER" or not plan.guide:
+        return
+    related = [
+        g for g in plan.guides if g.category == plan.guide.category and relevant_to_task(g, plan.state)
+    ]
+    material = reading_material(related, plan.guide, plan.state)
+    blocked = set(plan.state.questions) | set(plan.state.unavailable_details)
+    plan.state.grounding_clarifications = (
+        [
+            dict(field=k, section_id=g.id, title=g.title, documented_value=v)
+            for g in related
+            for k, v in g.applicability.items()
+            if v != "any"
+            and k in QUESTIONS
+            and k not in blocked
+            and getattr(plan.state.details, k, None) is None
+        ]
+        if len(plan.state.questions) < 3
+        else []
+    )
+    try:
+        result = validate_answer(
+            plan.client.ground(plan.user_message["text"], plan.state, material),
+            material,
+            {item["field"] for item in plan.state.grounding_clarifications},
+        )
+        if result.status == "needs_detail":
+            plan.decision = Decision(
+                action="ASK",
+                rule="source_clarification",
+                field=result.clarification_field,
+                response_kind="question",
+                options=["I'm not sure"],
+            )
+            plan.wording = QUESTIONS[result.clarification_field]
+            plan.guide = None
+            return
+        if result.status == "insufficient":
+            plan.decision = Decision(action="HANDOFF", rule="insufficient_evidence")
+            plan.wording = "The available sources do not support a reliable answer to that question. Review the support draft below; nothing has been submitted."
+            plan.guide = None
+            return
+        ids = list(
+            dict.fromkeys(c.section_id for statement in result.statements for c in statement.citations)
+        )
+        if plan.guide.content_kind == "procedure" and plan.guide.id not in ids:
+            ids.insert(0, plan.guide.id)
+        plan.cited_guides = [next(g for g in plan.guides if g.id == section_id) for section_id in ids]
+        if plan.guide.content_kind == "information":
+            plan.guide = plan.cited_guides[0]
+            plan.decision.guide_id = plan.guide.id
+        plan.grounding = [statement.model_dump() for statement in result.statements]
+        plan.wording = "\n\n".join(
+            statement.text + " " + " ".join(f"[{ids.index(c.section_id) + 1}]" for c in statement.citations)
+            for statement in result.statements
+        )
+    except (ProviderError, ValidationError, ValueError) as error:
+        plan.grounding_error = getattr(error, "code", "grounding_invalid")
+        plan.decision = Decision(
+            action="HANDOFF", rule="grounding_unavailable", response_kind="service_error"
+        )
+        plan.wording = "I couldn't verify a source-backed answer right now. Your message is saved. You can try again or request a person."
+        plan.guide = None
+        plan.cited_guides = []
+        plan.grounding = []
+
+
+def turn(conn, session, text, *, prepared=None, interpretation=None, interpretation_error=None, plan=None):
+    plan = plan or plan_turn(
+        conn,
+        session,
+        text,
+        prepared=prepared,
+        interpretation=interpretation,
+        interpretation_error=interpretation_error,
+    )
+    ground_plan(plan)
+    state, user_message, client = plan.state, plan.user_message, plan.client
+    extracted, decision, guide = plan.extracted, plan.decision, plan.guide
+    guides, wording, active = plan.guides, plan.wording, plan.active
+    conversational = settings().dialogue_mode == "conversational"
+    text = user_message["text"]
+    if settings().app_mode == "pilot":
+        # Revalidate after the external call: a source can expire or be withdrawn
+        # while the model is reading it. Do not commit a response from stale evidence.
+        current = prepare_state(conn, session)
+        for candidate in guides:
+            if not load_guide(
+                conn,
+                candidate.source_id,
+                version=candidate.corpus_version,
+                section_id=candidate.id,
+                audiences=current.knowledge_audiences,
+            ):
+                raise HTTPException(
+                    409, "Knowledge access changed during this turn. Send a new message to retry."
+                )
     message_id, snapshot_id = str(uuid4()), str(uuid4())
     selected_steps = guide.steps if guide else []
     progress = None
@@ -386,11 +720,12 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
         )
 
     if decision.action == "ASK":
-        if decision.rule != "clarify_question":
+        if decision.rule not in ("clarify_question", "choose_issue"):
             state.questions.append(decision.field or "category")
         else:
             state.explanation_count += 1
-        state.last_question_field = decision.field
+        if decision.rule != "choose_issue":
+            state.last_question_field = decision.field
         answer = wording
     elif decision.action == "ANSWER":
         answer = (
@@ -404,7 +739,14 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
         )
         if conversational:
             answer = wording
-        state.last_question_field = None
+        if decision.rule not in (
+            "issue_current",
+            "issue_resumed",
+            "draft_status",
+            "draft_contents",
+            "attempt_history",
+        ):
+            state.last_question_field = None
         if guide and decision.rule != "explain_previous":
             state.last_guide, state.last_steps, state.last_answer_id = (
                 guide.source_id,
@@ -417,22 +759,20 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
             answer = wording
         state.last_question_field = None
         state.outcome = "open" if decision.response_kind == "service_error" else "handoff"
-    sources = (
-        [
-            dict(
-                id=guide.source_id,
-                section_id=guide.id,
-                title=guide.title,
-                source_url=guide.source_url,
-                href=f"/sources/{guide.source_id}?version={guide.corpus_version}&section={guide.id}",
-                corpus_version=guide.corpus_version,
-                is_synthetic=guide.is_synthetic,
-                score=guide.score,
-            )
-        ]
-        if guide and decision.action == "ANSWER"
-        else []
-    )
+    source_guides = (plan.cited_guides or ([guide] if guide else [])) if decision.action == "ANSWER" else []
+    sources = [
+        dict(
+            id=g.source_id,
+            section_id=g.id,
+            title=g.title,
+            source_url=g.source_url,
+            href=f"/sources/{g.source_id}?version={g.corpus_version}&section={g.id}",
+            corpus_version=g.corpus_version,
+            is_synthetic=g.is_synthetic,
+            score=g.score,
+        )
+        for g in source_guides
+    ]
     steps = selected_steps if guide and decision.action == "ANSWER" else []
     if conversational and decision.rule == "explain_previous" and guide:
         indexes = extracted.explanation_step_indexes
@@ -442,10 +782,22 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
             if indexes and all(0 <= i < len(allowed) for i in indexes)
             else allowed
         )
-        if settings().app_mode == "pilot":
+        if settings().app_mode == "pilot" and not plan.grounding:
             node = next((n for n in guide.workflow if n.node_id == state.active_node), None)
             if node:
                 answer = node.explanation
+    saved_ticket = None
+    if decision.rule in ("draft_status", "draft_contents", "attempt_history"):
+        saved_ticket = saved_draft(conn, session["id"], state)
+        answer = (
+            "A draft is saved for this issue. This assistant has not submitted it."
+            if saved_ticket
+            else "There is no saved draft for this issue. This assistant has not submitted a ticket."
+        )
+        if decision.rule == "attempt_history":
+            answer += " Reported attempts: " + ("; ".join(state.steps_tried) or "None reported") + "."
+        if saved_ticket and decision.rule != "draft_status":
+            answer += "\n\nSaved draft:\n" + saved_ticket["draft"]
     response = dict(
         id=message_id,
         snapshot_id=snapshot_id,
@@ -463,6 +815,8 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
             json.dumps(Interpretation.model_json_schema(), sort_keys=True).encode()
         ).hexdigest()[:12],
         sources=sources,
+        grounding=plan.grounding,
+        agent_mode=settings().agent_mode,
         options=decision.options,
         progress=progress,
         references=[ref.model_dump() for ref in guide.references] if guide else [],
@@ -475,6 +829,8 @@ def turn(conn, session, text, *, prepared=None, interpretation=None, interpretat
     )
     if decision.action == "HANDOFF" and decision.response_kind != "service_error":
         response["ticket"] = ensure_ticket(conn, session["id"], state)
+    if saved_ticket:
+        response["ticket"] = saved_ticket
     response["user_message"] = user_message
     conn.execute(
         "INSERT INTO messages(id,session_id,role,text_redacted) VALUES(%s,%s,%s,%s)",

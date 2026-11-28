@@ -383,6 +383,8 @@ def test_operator_stage_telemetry_and_retention_alert_exclude_conversation_text(
             "reservation",
             "preparation",
             "interpretation",
+            "retrieval_and_policy",
+            "grounding",
             "decision_before_commit",
         }
         assert all(isinstance(v, int) and v >= 0 for v in record["usage"]["timings_ms"].values())

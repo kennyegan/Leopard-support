@@ -1,5 +1,6 @@
 from .models import Decision, Guide, Interpretation, State
 from .workflow import install_question, pending_decision, relevant_to_task
+from .config import settings
 
 ORDERS = {
     "wifi_network": ["os", "network"],
@@ -11,7 +12,7 @@ ORDERS = {
 
 
 def compatible(g: Guide, state: State) -> bool:
-    return g.category == state.category and all(
+    return (settings().agent_mode == "grounded" or g.category == state.category) and all(
         value == "any" or getattr(state.details, field, None) in (None, value)
         for field, value in g.applicability.items()
     )
@@ -98,6 +99,14 @@ def conversational_decision(state, extracted, guides, *, high=0.75, low=0.55, ac
         return Decision(action="HANDOFF", rule="explicit_human_request")
     if extracted.unsupported:
         return Decision(action="HANDOFF", rule="unsupported_scope")
+    if (
+        settings().agent_mode == "grounded"
+        and extracted.step_result == "not_tried"
+        and state.last_guide
+        and not state.active_guide
+        and state.outcome != "resolved"
+    ):
+        return Decision(action="ANSWER", rule="untried_suggestion", response_kind="status")
     if state.outcome == "resolved":
         return Decision(action="ANSWER", rule="resolved", response_kind="status")
     if extracted.step_result == "blocked":
@@ -140,6 +149,35 @@ def conversational_decision(state, extracted, guides, *, high=0.75, low=0.55, ac
             field=field,
             options=options + (["I'm not sure"] if field not in ("symptom", "category") else []),
         )
+
+    if settings().agent_mode == "grounded":
+        if extracted.intent == "vague_issue" or (
+            not state.category
+            and state.request_type == "troubleshoot"
+            and extracted.intent == "support"
+            and not state.details.model_dump(exclude_none=True)
+        ):
+            for field in ("category", "symptom", "device") if not state.category else ("symptom", "device"):
+                if field not in blocked and not getattr(state.details, field, None):
+                    return ask(field, "understand_issue")
+        # Category is a routing hypothesis, not a hard fact. A source reader
+        # checks actual relevance after retrieval, including unfamiliar topics.
+        available = [
+            g
+            for g in guides
+            if compatible(g, state)
+            and relevant_to_task(g, state)
+            and g.source_id not in state.attempted_guides + state.completed_guides
+            and all(v == "any" or getattr(state.details, k, None) == v for k, v in g.applicability.items())
+        ]
+        if available:
+            best = max(available, key=lambda g: g.score)
+            return Decision(
+                action="ANSWER",
+                rule="grounded_evidence",
+                guide_id=best.id,
+                response_kind="explanation" if best.content_kind == "information" else "guide",
+            )
 
     if state.category is None:
         for field in ("category", "symptom", "device"):

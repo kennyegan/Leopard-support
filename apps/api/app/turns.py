@@ -13,10 +13,10 @@ from .auth import authorize_owner
 from .boundaries import rate_limit
 from .config import settings
 from .db import connection
-from .llm import ProviderError, explicit_human, explicit_stop, provider
-from .models import Interpretation
+from .llm import ProviderError, local_interpretation, provider
+from .models import State
 from .privacy import redact
-from .service import prepare_state, turn
+from .service import prepare_state, plan_turn, ground_plan, turn
 
 log = logging.getLogger("techspot.turns")
 
@@ -37,7 +37,6 @@ def pilot_turn(session_id, body, user):
         raise HTTPException(422, "A request_id is required for reliable delivery")
     text = redact(body.text.strip())
     input_hash = hashlib.sha256(text.encode()).hexdigest()
-    requires_inference = not (explicit_human(text) or explicit_stop(text))
     turn_id = uuid4()
     start = time.monotonic()
     with connection() as conn:
@@ -53,6 +52,8 @@ def pilot_turn(session_id, body, user):
         conn.execute(
             "UPDATE pilot_turns SET status='uncertain',error_code='worker_interrupted' WHERE status='processing' AND lease_expires_at<now()"
         )
+        direct = local_interpretation(text, State.model_validate(session["state"]))
+        requires_inference = direct is None
         previous = conn.execute(
             "SELECT * FROM pilot_turns WHERE session_id=%s AND request_id=%s", (session_id, body.request_id)
         ).fetchone()
@@ -100,6 +101,7 @@ def pilot_turn(session_id, body, user):
         raise HTTPException(409, detail)
     timings = {"reservation": int((time.monotonic() - start) * 1000)}
     interpreter = None
+    stage_usage = {}
     try:
         stage_start = time.monotonic()
         with connection() as conn:
@@ -110,14 +112,33 @@ def pilot_turn(session_id, body, user):
         interpreter = provider()
         stage_start = time.monotonic()
         try:
-            result = (
-                Interpretation(requested_human=explicit_human(text), unsupported=explicit_stop(text))
-                if not requires_inference
-                else interpreter.interpret(text, state)
-            )
+            result = direct if direct is not None else interpreter.interpret(text, state)
         except (ProviderError, ValidationError) as exc:
             error = exc
         timings["interpretation"] = int((time.monotonic() - stage_start) * 1000)
+        stage_usage["interpretation"] = dict(getattr(interpreter, "last_usage", {}))
+        stage_start = time.monotonic()
+        with connection() as conn:
+            planned = plan_turn(
+                conn,
+                session,
+                text,
+                prepared=state,
+                interpretation=result,
+                interpretation_error=error,
+                client=interpreter,
+            )
+        timings["retrieval_and_policy"] = int((time.monotonic() - stage_start) * 1000)
+        stage_start = time.monotonic()
+        # The source-reading call also runs outside database transactions/locks.
+        ground_plan(planned)
+        timings["grounding"] = int((time.monotonic() - stage_start) * 1000)
+        if (
+            planned.grounding
+            or planned.grounding_error
+            or planned.decision.rule in {"insufficient_evidence", "source_clarification"}
+        ):
+            stage_usage["grounding"] = dict(getattr(interpreter, "last_usage", {}))
         stage_start = time.monotonic()
         with connection() as conn:
             active_identity(conn, user)
@@ -130,9 +151,7 @@ def pilot_turn(session_id, body, user):
             ).fetchone()
             if not record or record["status"] != "processing" or not record["valid"]:
                 raise HTTPException(409, "Turn lease expired; outcome requires review")
-            response = turn(
-                conn, current, text, prepared=state, interpretation=result, interpretation_error=error
-            )
+            response = turn(conn, current, text, plan=planned)
             response["turn_id"] = str(turn_id)
             conn.execute("UPDATE messages SET request_id=%s WHERE id=%s", (body.request_id, response["id"]))
             elapsed = int((time.monotonic() - start) * 1000)
@@ -144,10 +163,10 @@ def pilot_turn(session_id, body, user):
                 provider=%s,usage=%s,completed_at=now() WHERE id=%s""",
                 (
                     Jsonb(response),
-                    getattr(error, "code", "schema_invalid" if error else None),
+                    planned.grounding_error or getattr(error, "code", "schema_invalid" if error else None),
                     elapsed,
                     response["provider"],
-                    Jsonb({**getattr(interpreter, "last_usage", {}), "timings_ms": timings}),
+                    Jsonb({"calls": stage_usage, "timings_ms": timings}),
                     turn_id,
                 ),
             )
@@ -163,7 +182,7 @@ def pilot_turn(session_id, body, user):
         with connection() as conn:
             conn.execute(
                 "UPDATE pilot_turns SET status='uncertain',error_code='turn_interrupted',usage=%s WHERE id=%s AND status='processing'",
-                (Jsonb({**getattr(interpreter, "last_usage", {}), "timings_ms": timings}), turn_id),
+                (Jsonb({"calls": stage_usage, "timings_ms": timings}), turn_id),
             )
         log.warning("turn_interrupted id=%s", turn_id)
         raise

@@ -103,7 +103,7 @@ def test_failure_count_is_idempotent():
     s = state(last_answer_id="a", last_guide="mac", last_steps=["step"])
     for _ in range(3):
         s = merge(s, Interpretation(outcome="failed"), "No")
-    assert s.failures == 1 and s.steps_tried == ["step"]
+    assert s.failures == 1 and s.steps_tried == []
 
 
 def test_extraction_schema_and_unknown_details():

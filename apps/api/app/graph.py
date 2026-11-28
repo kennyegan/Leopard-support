@@ -147,8 +147,6 @@ def advance(state, extracted):
     state.workflow_waits = 0
     if target == "@retry":
         return False  # Existing bounded failed-attempt accounting chooses another guide.
-    if extracted.step_result == "completed":
-        state.steps_tried = list(dict.fromkeys(state.steps_tried + state.last_steps))
     state.workflow_advanced = True
     if target == "@retrieve":
         state.completed_guides = list(dict.fromkeys(state.completed_guides + [state.active_guide]))

@@ -19,7 +19,7 @@ from .llm import ProviderError, provider_configured
 from .models import FeedbackIn, MessageIn, SessionIn, State, TicketIn
 from .privacy import redact
 from .retrieval import MODEL, corpus_version, embedder
-from .service import ensure_ticket, turn
+from .service import ensure_ticket, saved_draft, turn, verified_session_state
 from .auth import router as auth_router, principal, authorize_owner
 from .boundaries import BodyLimitMiddleware, pilot_access
 from .turns import pilot_turn
@@ -217,17 +217,15 @@ def session_history(id: UUID, user=Depends(principal)):
             "SELECT id,role,text_redacted AS text,response FROM messages WHERE session_id=%s ORDER BY created_at,role DESC,id",
             (id,),
         ).fetchall()
-        ticket = conn.execute(
-            "SELECT id,draft_redacted AS draft,edited FROM tickets WHERE session_id=%s AND (problem_id=%s OR problem_id IS NULL) ORDER BY problem_id NULLS LAST LIMIT 1",
-            (id, session["state"].get("problem_id")),
-        ).fetchone()
+        state = verified_session_state(conn, session)
+        ticket = saved_draft(conn, id, state)
         feedback = conn.execute(
             "SELECT message_id,kind,value FROM feedback WHERE session_id=%s", (id,)
         ).fetchall()
         return dict(
             id=str(id),
             mode=session["mode"],
-            state=session["state"],
+            state=state.model_dump(),
             messages=messages,
             ticket=ticket,
             feedback=feedback,
@@ -275,15 +273,16 @@ def snapshots(id: UUID, user=Depends(principal)):
 
 @app.get("/api/account/sessions")
 def account_sessions(user=Depends(principal)):
-    if settings().app_mode != "demo" or not user:
+    if not user:
         raise HTTPException(401, "Sign in to see your conversations")
+    owner_column = "owner_id" if settings().app_mode == "pilot" else "account_id"
     with connection() as conn:
         return conn.execute(
-            """SELECT s.id, s.updated_at, s.state->>'outcome' AS outcome, first.text_redacted AS title
+            f"""SELECT s.id, s.updated_at, s.state->>'outcome' AS outcome, first.text_redacted AS title
             FROM sessions s
             JOIN LATERAL (SELECT text_redacted FROM messages m WHERE m.session_id=s.id AND m.role='user'
               ORDER BY m.created_at LIMIT 1) first ON true
-            WHERE s.account_id=%s ORDER BY s.updated_at DESC LIMIT 100""",
+            WHERE s.{owner_column}=%s ORDER BY s.updated_at DESC LIMIT 100""",
             (user["id"],),
         ).fetchall()
 
@@ -375,14 +374,14 @@ def feedback(body: FeedbackIn, user=Depends(principal)):
 def make_ticket(id: UUID, user=Depends(principal)):
     with connection() as conn:
         session = get_session(conn, id, lock=True, user=user)
-        return ensure_ticket(conn, id, State.model_validate(session["state"]))
+        return ensure_ticket(conn, id, verified_session_state(conn, session))
 
 
 @app.put("/api/sessions/{id}/ticket")
 def edit_ticket(id: UUID, body: TicketIn, user=Depends(principal)):
     with connection() as conn:
         session = get_session(conn, id, lock=True, user=user)
-        ensure_ticket(conn, id, State.model_validate(session["state"]))
+        ensure_ticket(conn, id, verified_session_state(conn, session))
         return conn.execute(
             "UPDATE tickets SET draft_redacted=%s,edited=true,updated_at=now() WHERE session_id=%s AND problem_id=%s RETURNING id,draft_redacted AS draft,edited",
             (redact(body.draft), id, session["state"].get("problem_id")),

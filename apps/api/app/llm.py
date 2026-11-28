@@ -14,6 +14,7 @@ from .privacy import redact
 from .retrieval import corpus_version
 from .skills import troubleshooting_skill
 from .interpretation import normalize, scripted_task
+from .evidence import literal_evidence
 
 QUESTIONS = {
     "category": "What kind of problem are you having?",
@@ -34,6 +35,8 @@ def explicit_human(text):
     # Evaluate clauses separately so a negated ticket does not suppress a later
     # affirmative request, and a mere mention of a ticket is not escalation.
     for clause in re.split(r"[.!?;]|\b(?:but|however)\b", text.lower()):
+        if re.match(r"\s*(?:did|has|have|was|is|what|when|where|how|should I)\b", clause, re.I):
+            continue
         target = r"(?:human|technician|staff|ticket|a person|techspot)"
         clause = re.sub(
             rf"\b(?:don't|do not|dont|never|not)\s+(?:want|need|request|create|open|submit|talk to|speak to)\b.{{0,35}}?\b{target}\b|\b(?:no|without)\s+(?:a )?{target}\b",
@@ -48,8 +51,56 @@ def explicit_human(text):
     return False
 
 
+def record_question(text):
+    """Recognize common read-only questions even when inference is unavailable."""
+    words = text.lower().strip().rstrip("?.!").replace("’", "'")
+    ticket = r"(?:(?:my|the|a|that) )?(?:support )?(?:ticket|draft|request)"
+    if re.fullmatch(
+        rf"did (?:you|we) (?:already )?(?:submit|send|file|open) (?:it|anything|{ticket})(?: already)?"
+        rf"|(?:has|was|is) (?:it|{ticket}) (?:been )?(?:sent|submitted|filed)",
+        words,
+    ):
+        return "draft_status"
+    if re.fullmatch(
+        rf"what(?:'s| is) in {ticket}|what did you (?:put|write|include) in {ticket}"
+        rf"|(?:show|read)(?: me)? {ticket}",
+        words,
+    ):
+        return "draft_contents"
+    if re.fullmatch(
+        r"did you (?:write|record|say) that i tried [^.?!]+"
+        r"|can you make sure you didn't say i tried [^.?!]+"
+        r"|what (?:have i (?:already )?tried|did i (?:already )?try)",
+        words,
+    ):
+        return "attempt_history"
+    return None
+
+
+def local_interpretation(text, state=None):
+    """Resolve explicit pilot controls before reserving any model work."""
+    if settings().agent_mode == "grounded":
+        if state and state.awaiting_issue_choice:
+            alias = state.resume_options().get(text)
+            if alias or text == "Continue current issue":
+                return Interpretation(intent="resume", resume_problem_id=alias, resume_evidence=text)
+        intent = record_question(text)
+        if intent:
+            return Interpretation(intent=intent)
+    if explicit_human(text):
+        return Interpretation(requested_human=True)
+    if settings().app_mode == "pilot" and explicit_stop(text):
+        return Interpretation(unsupported=True)
+    return None
+
+
 class ScriptedProvider:
     name = "scripted-offline (not an LLM)"
+
+    def ground(self, text, state, material):
+        from .grounding import offline_answer
+
+        return offline_answer(material)
 
     def interpret(self, text, state):
         t = text.lower()
@@ -175,7 +226,25 @@ class ScriptedProvider:
                 and (not state.problem_text or result.new_problem)
                 else ""
             )
-        return scripted_task(result, text, state) if settings().dialogue_mode == "conversational" else result
+        result = (
+            scripted_task(result, text, state) if settings().dialogue_mode == "conversational" else result
+        )
+        if settings().agent_mode == "grounded":
+            if state.last_guide and re.search(
+                r"\b(?:haven.t|have not|never) (?:actually )?(?:checked|tried)\b", t
+            ):
+                result.step_result = "not_tried"
+                result.outcome = "unknown"
+            if re.search(r"\b(?:back to|return to|resume)\b", t) and state.suspended_problems:
+                result = Interpretation(intent="resume", resume_evidence=text[:300])
+                matches = [
+                    alias
+                    for alias, issue in state.issue_choices().items()
+                    if alias in t or (category and issue.get("category") == category)
+                ]
+                if len(matches) == 1:
+                    result.resume_problem_id = matches[0]
+        return literal_evidence(result, text) if settings().agent_mode == "grounded" else result
 
     def word(self, decision, guide):
         return QUESTIONS.get(decision.field, "Could you describe the problem a little more?")
@@ -271,11 +340,16 @@ def strict_json_schema(schema):
 class StructuredProvider:
     """Shared extraction and grounded wording contract; transports own call()."""
 
+    def ground(self, text, state, material):
+        from .grounding import GroundedAnswer, reading_prompt
+
+        return self.call(reading_prompt(text, state, material), GroundedAnswer)
+
     def interpret(self, text, state):
         value = self.call(
             json.dumps(
                 {
-                    "task": "Extract only explicit facts and corrections; null means unknown.",
+                    "task": "Extract only explicit facts and corrections; null means unknown. For every detail provide its exact supporting quote from the CURRENT message in detail_evidence. Omit guesses and facts from comparison devices. An explicit request to return to a suspended issue may use its listed ID with resume_evidence.",
                     "prior_state": {
                         k: v
                         for k, v in state.model_dump().items()
@@ -288,11 +362,22 @@ class StructuredProvider:
                             "completed_guides",
                             "problem_id",
                             "facts",
+                            "uncertain_facts",
+                            "suspended_problems",
                             "active_corpus",
                             "active_section",
                             "active_workflow_version",
                         )
                     },
+                    "suspended_issues": [
+                        {
+                            "problem_id": alias,
+                            "category": p.get("category"),
+                            "summary": p.get("problem_text", "")[:350],
+                            "details": {k: v for k, v in p.get("details", {}).items() if v},
+                        }
+                        for alias, p in state.issue_choices().items()
+                    ],
                     "recent_dialogue": state.recent_dialogue,
                     "documented_names": state.interpretation_vocabulary,
                     "troubleshooting_skill": troubleshooting_skill()[0]
@@ -343,7 +428,9 @@ class GeminiProvider(StructuredProvider):
             last = index == len(models) - 1
             reserve_external_call(s.gemini_api_key, model)
             try:
-                return self.request(model, prompt, schema, remaining if last else min(remaining, s.gemini_timeout / 2))
+                return self.request(
+                    model, prompt, schema, remaining if last else min(remaining, s.gemini_timeout / 2)
+                )
             except (httpx.TimeoutException, httpx.HTTPStatusError) as error:
                 retryable = isinstance(error, httpx.TimeoutException) or (
                     error.response.status_code == 429 or error.response.status_code >= 500
@@ -385,7 +472,7 @@ class GeminiProvider(StructuredProvider):
             if status is not None:
                 try:
                     body = error.response.json().get("error", {})
-                    detail = f'{body.get("status", "")}: {body.get("message", "")}'[:240]
+                    detail = f"{body.get('status', '')}: {body.get('message', '')}"[:240]
                 except Exception:
                     pass
             finish = None
@@ -396,7 +483,11 @@ class GeminiProvider(StructuredProvider):
                     pass
             logging.getLogger("techspot.llm").warning(
                 "gemini_call_failed model=%s error=%s status=%s finish=%s detail=%s",
-                model, type(error).__name__, status, finish, detail,
+                model,
+                type(error).__name__,
+                status,
+                finish,
+                detail,
             )
             if isinstance(error, (httpx.TimeoutException, httpx.HTTPStatusError)):
                 raise

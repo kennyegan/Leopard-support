@@ -7,6 +7,10 @@ description: "Interpret the user’s IT task and progress in TechSpot Assist, in
 
 Understand the task before the symptom.
 
+For an explicit return to an earlier issue, select its listed short ID and quote the user's return request. Use intent `resume` for a simple return or recap. If the issue is ambiguous, leave the ID empty. For questions about this conversation's ticket delivery, saved draft, or recorded actions, use `draft_status`, `draft_contents`, or `attempt_history`. These ask about application records. A general question about how tickets work is a documentation question.
+
+For `steps_tried`, copy only the user's own words reporting an action they performed in the current message. Never infer steps from an offered guide, a failed outcome, or a question about what was recorded.
+
 Interpret the whole conversation and confirmed state. The request type is the user's goal, distinct from product/category and from conversational intent.
 
 - `install`: obtain/download/install software. “I need to download auto desk” means software acquisition, not a crash or an unspecified error. `setup`: first-time configuration/connection. `access`: obtain authorization. `how_to`: learn a task. `troubleshoot`: something expected to work is failing.

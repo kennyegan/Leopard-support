@@ -39,7 +39,34 @@ class QuestionDraft(Strict):
     text: str = Field(max_length=240)
 
 
+class DetailEvidence(Strict):
+    field: Literal[
+        "vendor",
+        "license_route",
+        "affected_scope",
+        "network",
+        "device",
+        "os",
+        "system_or_app",
+        "printer",
+        "error_text",
+        "symptom",
+    ]
+    quote: str = Field(min_length=1, max_length=1000)
+
+
 class Interpretation(Strict):
+    detail_evidence: list[DetailEvidence] = Field(
+        default_factory=list,
+        max_length=10,
+        description="For each reported detail, quote the exact supporting words from the current user message. Never supply inferred facts.",
+    )
+    resume_problem_id: str | None = Field(
+        default=None,
+        max_length=36,
+        description="Only the ID of a listed suspended issue that the user explicitly asks to return to.",
+    )
+    resume_evidence: str = Field(default="", max_length=300)
     request_type: RequestType | None = Field(
         default=None,
         description="The user's goal. Keep the existing goal through progress or access blockers. Joining/configuring a network without a reported malfunction is setup.",
@@ -63,7 +90,18 @@ class Interpretation(Strict):
     unsupported: bool = False
     new_problem: bool = False
     uncertainties: list[str] = Field(default_factory=list, max_length=20)
-    intent: Literal["support", "vague_issue", "explain", "unsure", "greeting", "thanks"] = "support"
+    intent: Literal[
+        "support",
+        "vague_issue",
+        "explain",
+        "unsure",
+        "greeting",
+        "thanks",
+        "resume",
+        "draft_status",
+        "draft_contents",
+        "attempt_history",
+    ] = "support"
     summary: str = Field(default="", max_length=350)
     acknowledgement: str = Field(default="", max_length=200)
     question_drafts: list[QuestionDraft] = Field(default_factory=list, max_length=3)
@@ -77,7 +115,11 @@ class Interpretation(Strict):
 
 
 class State(Strict):
+    awaiting_issue_choice: bool = False
     knowledge_audiences: list[str] = Field(default_factory=lambda: ["campus"], exclude=True)
+    grounding_clarifications: list[dict] = Field(default_factory=list, exclude=True)
+    suspended_problems: list[dict] = Field(default_factory=list, max_length=3)
+    uncertain_facts: dict[str, dict] = Field(default_factory=dict)
     request_type: RequestType = "troubleshoot"
     active_guide: str | None = None
     active_corpus: str | None = None
@@ -117,6 +159,15 @@ class State(Strict):
     explanation_count: int = 0
     recent_dialogue: list[dict[str, str]] = Field(default_factory=list, exclude=True)
     interpretation_vocabulary: list[dict[str, str]] = Field(default_factory=list, exclude=True)
+
+    def issue_choices(self):
+        return {f"issue-{i}": problem for i, problem in enumerate(self.suspended_problems, 1)}
+
+    def resume_options(self):
+        return {
+            f"Resume {alias} ({p.get('category') or 'support'}: {p.get('problem_text', '')[:90]})": alias
+            for alias, p in self.issue_choices().items()
+        }
 
 
 class Reference(Strict):

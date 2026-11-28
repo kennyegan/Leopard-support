@@ -4,7 +4,35 @@ Conversational IT support for Wentworth Institute of Technology. Students and st
 
 The guide library is synthetic until TechSpot and the university security team approve access to the real knowledge base.
 
-## Importing approved campus documentation
+## Campus integration milestone
+
+`AGENT_MODE=grounded` enables an opt-in campus integration path. The default remains
+`guided` until the deployment has completed the release checks below. This code is
+an integration candidate, not evidence of university approval or live-model quality.
+
+The grounded turn is: interpret the current message → admit supported user facts →
+retrieve permitted sources → choose a bounded action → read the retrieved evidence
+with the model → validate citations → save and display the answer. In pilot mode,
+both model calls run outside database transactions and are covered by the existing
+durable request ID, concurrency limits and provider spend grants. There are at most
+two provider calls per turn; no autonomous account changes or ticket submission.
+
+The second call receives up to three source sections, including the current approved
+procedure and relevant informational context. The backend checks exact quoted
+passages and source membership, and displays the reviewed procedure steps separately.
+Those checks **do not prove semantic entailment**: a paraphrase can cite real words
+and still misinterpret them. Real-model and independent staff review remain release
+requirements. The offline provider copies a source excerpt to exercise the plumbing;
+it is explicitly labeled scripted and must never count as an LLM qualification.
+
+User details need supporting words from the current message before becoming hard
+retrieval filters. Unsupported interpretations are retained as `unverified` facts.
+Known aliases support conservative normalization; this is not a general semantic
+proof that a quoted fact describes the affected device. Corrections replace prior
+facts, and up to three unresolved issues can be suspended and explicitly resumed.
+Authored diagnostic graphs retain control of ordering, attempt counts and completion.
+
+### Importing approved campus documentation
 
 Use a private pilot database and `APP_MODE=pilot`, `DIALOGUE_MODE=conversational`,
 `AGENT_MODE=grounded`. Set `APPROVED_CAMPUS_CORPUS_VERSION` to the exact import
@@ -48,6 +76,28 @@ Real content is never exposed in demo mode. Permission to import content does no
 authorize sending it to an AI provider: the exact `APPROVED_EXTERNAL_CORPUS_VERSION`,
 provider configuration and existing database spend grant must separately permit that
 processing. The campus path does not change any external-call or spend allowance.
+
+### Opening the invited pilot
+
+Before real students or staff enter the pilot, require:
+
+1. Approved content for the selected 2–3 topics, a named campus sponsor/reviewer,
+   approved tester scope, an agreed escalation destination and real campus identity
+   configuration. The local test issuer must never be deployed as campus identity.
+2. Actual-model evaluation on the approved corpus and a fresh holdout. Proposed
+   acceptance thresholds are at least 90% correct eligible retrieval and 90%
+   staff-accepted outcomes, with no unauthorized source exposure, unsupported
+   consequential instructions or falsely claimed submissions in the release set.
+   Staff must approve the rubric and thresholds before qualification.
+3. Passing ownership, source visibility, history, deletion, retention and regression
+   checks. Run `python -m app.cleanup --apply` on the approved retention schedule.
+   Export recovery ledgers to separate protected storage and test backup restoration.
+   Ledger version 3 preserves audience grants and source withdrawals as well as
+   deletions, invitation revocations and spend counters; older ledgers are rejected.
+4. Measured response time and cost within agreed budgets; verified alert delivery,
+   provider failure behavior, inference kill switch and rollback to the prior
+   reviewed release/corpus. `/api/ready` proves service configuration and accessible
+   content, not model quality or permission to launch.
 
 | Part | Stack | Path |
 |---|---|---|

@@ -113,6 +113,8 @@ def relevant_to_task(guide, state):
         return False
     if guide.workflow_version:
         return graph.matches(guide, state)
+    if settings().agent_mode == "grounded" and not guide.workflow:
+        return True
     if settings().app_mode == "pilot":
         return False  # Pilot never falls back to legacy product-specific execution.
     if guide.source_id.startswith("autodesk-"):
@@ -145,7 +147,6 @@ def advance(state, extracted):
     if result == "completed" or extracted.installation_stage:
         state.workflow_blocked = False
     if result == "completed":
-        state.steps_tried = list(dict.fromkeys(state.steps_tried + state.last_steps))
         state.active_step += 1
         state.workflow_advanced = True
     if extracted.installation_stage:
