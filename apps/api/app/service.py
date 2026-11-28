@@ -9,6 +9,7 @@ import logging
 from .llm import FallbackProvider, ProviderError, ScriptedProvider, explicit_human, explicit_stop, provider
 from .models import Decision, Interpretation, State, Guide
 from .policy import compatible, decide, discriminators
+from .knowledge import ACCESS_SQL, access_params, audiences_for
 from .privacy import redact, redact_values
 from .retrieval import corpus_version, retrieve, load_guide, load_active
 from .dialogue import wording as conversation_wording
@@ -188,6 +189,12 @@ def ensure_ticket(conn, session_id, state):
 
 def prepare_state(conn, session):
     state = State.model_validate(session["state"])
+    if settings().app_mode == "pilot" and session.get("owner_id"):
+        owner = conn.execute(
+            "SELECT i.knowledge_audiences FROM pilot_users u JOIN pilot_invites i ON i.email=u.email WHERE u.id=%s AND i.active",
+            (session["owner_id"],),
+        ).fetchone()
+        state.knowledge_audiences = audiences_for(owner)
     conversational = settings().dialogue_mode == "conversational"
     if conversational:
         recent = conn.execute(
@@ -202,15 +209,14 @@ def prepare_state(conn, session):
         # operational prose. It prevents initial category filtering from hiding
         # a guide merely because the interpreter did not recognize its name.
         state.interpretation_vocabulary = conn.execute(
-            """SELECT DISTINCT a.category,p.key AS field,p.value AS name
+            f"""SELECT DISTINCT a.category,p.key AS field,p.value AS name
             FROM sections s JOIN articles a ON a.id=s.article_id AND a.corpus_version=s.corpus_version
+            JOIN corpora c ON c.version=s.corpus_version
             CROSS JOIN LATERAL jsonb_each_text(s.applicability) p
-            WHERE s.corpus_version=%s AND a.is_synthetic
-              AND a.allowed_visibility='private synthetic pilot'
-              AND s.workflow_version IS NOT NULL
+            WHERE s.corpus_version=%(corpus)s AND {ACCESS_SQL}
               AND p.key IN ('network','printer','system_or_app','vendor') AND p.value<>'any'
             ORDER BY a.category,p.key,p.value LIMIT 40""",
-            (settings().corpus_version,),
+            dict(**access_params(state.knowledge_audiences), corpus=settings().corpus_version),
         ).fetchall()
     active = load_active(conn, state) if conversational else None
     if active:

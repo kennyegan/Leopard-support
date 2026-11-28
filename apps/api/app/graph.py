@@ -68,7 +68,7 @@ def matches(guide, state):
         return False
     # If an entry observation's evidence is already known and its declared
     # transition requests another guide, do not ask the observation again.
-    return not any(
+    return not guide.workflow or not any(
         branch["next"] == "@retrieve" and getattr(state.details, branch["field"]) == branch["equals"]
         for branch in guide.workflow[0].branches
     )

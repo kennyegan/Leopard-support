@@ -4,6 +4,51 @@ Conversational IT support for Wentworth Institute of Technology. Students and st
 
 The guide library is synthetic until TechSpot and the university security team approve access to the real knowledge base.
 
+## Importing approved campus documentation
+
+Use a private pilot database and `APP_MODE=pilot`, `DIALOGUE_MODE=conversational`,
+`AGENT_MODE=grounded`. Set `APPROVED_CAMPUS_CORPUS_VERSION` to the exact import
+version and `CAMPUS_SOURCE_HOSTS` to a JSON array of approved HTTPS hostnames.
+These settings are operator attestations: obtain the campus approvals first.
+There is no crawler or public upload endpoint.
+
+The JSON envelope has `version`, `permission` and `guides`. For real content:
+
+- `permission.audience` is `campus pilot`; `approved_by` and
+  `security_approved_by` record the responsible reviewers.
+- Every article has a unique URL-safe `id`, `title`, category, approved HTTPS
+  `source_url`, explicit `is_synthetic: false`, `content_owner`, current
+  `reviewed_at` and future `review_due` dates in `YYYY-MM-DD` format.
+- `audiences` contains one or more of `campus`, `student`, `staff`. `campus`
+  means every invited pilot user. Application administrator status does not grant
+  staff-document access. Use `python -m app.pilot_admin invite EMAIL --audience
+  student` or `--audience staff` under operator credentials to grant affiliation.
+- `applicability` contains reviewed constraints using `Details` fields, such as
+  `os` or `network`; use `{}` for generally applicable information. `request_types`
+  identifies supported tasks (`troubleshoot`, `install`, `setup`, `access`, `how_to`).
+- Sections have `heading`, `text`, and `content_kind`. An `information` section
+  has `steps: []` and no workflow. A `procedure` needs 1–6 reviewed steps. Optional
+  diagnostic workflows require a versioned, validated graph. JSON, CSV and HTML
+  with review metadata are accepted; HTML informational imports do not need fake steps.
+
+Run `PYTHONPATH=apps/api .venv/bin/python -m app.release --corpus PATH` with the
+operator environment and a separate `RUNTIME_DB_PASSWORD`. The release command
+applies migrations, validates every section, imports embeddings and grants the
+restricted runtime role. Deploy the web and API together, and set `CORPUS_VERSION`
+to the imported version. An existing version cannot be overwritten: publish changes
+as a new version. Keep reviewed source files in approved protected storage, not Git.
+
+Retrieval, source pages and pinned workflow loads share audience, review-expiry and
+withdrawal checks. To withdraw an article, run `python -m app.knowledge VERSION
+--source-id ID` as an operator; omit `--source-id` to withdraw the corpus. Old pinned
+links then become unavailable. Republishing requires a new version. Sources are
+revalidated after model inference so a withdrawal during a turn prevents its commit.
+
+Real content is never exposed in demo mode. Permission to import content does not
+authorize sending it to an AI provider: the exact `APPROVED_EXTERNAL_CORPUS_VERSION`,
+provider configuration and existing database spend grant must separately permit that
+processing. The campus path does not change any external-call or spend allowance.
+
 | Part | Stack | Path |
 |---|---|---|
 | Web | Next.js 16, React 19, plain CSS | `apps/web` |

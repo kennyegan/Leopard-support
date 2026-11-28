@@ -4,6 +4,7 @@ from psycopg.types.json import Jsonb
 from .config import settings
 from .models import Guide, State
 from .graph import matches
+from .knowledge import ACCESS_SQL, access_params
 
 MODEL = "BAAI/bge-small-en-v1.5"
 CORPUS = "synthetic-2026-10-v1"
@@ -31,6 +32,11 @@ def vector_literal(vector):
 
 def row_guide(row):
     return Guide(
+        content_kind=row.get("content_kind", "procedure"),
+        audiences=row.get("audiences", ["campus"]),
+        content_owner=row.get("content_owner", ""),
+        reviewed_at=str(row.get("reviewed_at") or ""),
+        review_due=str(row.get("review_due") or ""),
         id=row["id"],
         source_id=row["article_id"],
         title=row["title"],
@@ -52,9 +58,9 @@ def row_guide(row):
     )
 
 
-def retrieve(conn, text: str, state: State, *, ranking=None) -> list[Guide]:
+def retrieve(conn, text: str, state: State, *, ranking=None, query_override=None) -> list[Guide]:
     facts = " ".join(v for v in state.details.model_dump().values() if v)
-    query = f"{state.problem_text} {text} {facts}"[:2500]
+    query = (query_override or f"{state.problem_text} {text} {facts}")[:2500]
     if settings().dialogue_mode == "conversational":
         query = f"{state.request_type} {query}"
     vector = vector_literal(next(embedder().query_embed(query)))
@@ -62,15 +68,15 @@ def retrieve(conn, text: str, state: State, *, ranking=None) -> list[Guide]:
         # Exclude inaccessible or contradicted candidates BEFORE ranking/top-k.
         # Missing facts remain eligible for source-backed intake, never guessed.
         rows = conn.execute(
-            """
-          SELECT s.*, a.title,a.category,a.source_url,a.is_synthetic,
+            f"""
+          SELECT s.*, a.title,a.category,a.source_url,a.is_synthetic,a.audiences,a.content_owner,a.reviewed_at,a.review_due,
                  1-(s.embedding <=> %(vector)s::vector) AS score,
                  ts_rank_cd(to_tsvector('simple',a.title || ' ' || s.section_text),
                             plainto_tsquery('simple',%(query)s)) AS lexical
           FROM sections s JOIN articles a ON a.id=s.article_id AND a.corpus_version=s.corpus_version
-          WHERE s.corpus_version=%(corpus)s AND a.allowed_visibility='private synthetic pilot'
-            AND a.is_synthetic AND s.workflow_version IS NOT NULL
-            AND (%(category)s::text IS NULL OR a.category=%(category)s)
+          JOIN corpora c ON c.version=s.corpus_version
+          WHERE s.corpus_version=%(corpus)s AND {ACCESS_SQL}
+            AND (%(grounded)s OR %(category)s::text IS NULL OR a.category=%(category)s)
             AND s.request_types ? %(request)s
             AND NOT EXISTS (SELECT 1 FROM jsonb_each_text(s.applicability) p
                 WHERE p.value <> 'any' AND %(facts)s::jsonb ->> p.key IS NOT NULL
@@ -78,6 +84,7 @@ def retrieve(conn, text: str, state: State, *, ranking=None) -> list[Guide]:
           ORDER BY s.embedding <=> %(vector)s::vector,s.id
         """,
             dict(
+                **access_params(state.knowledge_audiences),
                 vector=vector,
                 query=query,
                 corpus=corpus_version(),
@@ -111,6 +118,13 @@ def retrieve(conn, text: str, state: State, *, ranking=None) -> list[Guide]:
             if r["article_id"] not in state.attempted_guides + state.completed_guides
             and matches(row_guide(r), state)
         ]
+        if settings().agent_mode == "grounded":
+            rows = [r for r in rows if r["score"] >= settings().low_score]
+            if rows:
+                # Use the strongest eligible topic even if the interpreter guessed
+                # the wrong category. Unrelated topics cannot supply follow-up steps.
+                topic = rows[0]["category"]
+                rows = [r for r in rows if r["category"] == topic]
         # Ready-to-use evidence should not be crowded out by five guides that
         # still need a discriminator. Preserve the ranking within each group.
         rows.sort(
@@ -121,38 +135,46 @@ def retrieve(conn, text: str, state: State, *, ranking=None) -> list[Guide]:
         rows = rows[:5]
     else:
         rows = conn.execute(
-            """
-          SELECT s.*,a.title,a.category,a.source_url,a.is_synthetic,1-(s.embedding <=> %s::vector) AS score
+            f"""
+          SELECT s.*,a.title,a.category,a.source_url,a.is_synthetic,a.audiences,a.content_owner,a.reviewed_at,a.review_due,
+                 1-(s.embedding <=> %(vector)s::vector) AS score
           FROM sections s JOIN articles a ON a.id=s.article_id AND a.corpus_version=s.corpus_version
-          WHERE s.corpus_version=%s AND (%s OR s.request_types ? %s)
-          ORDER BY s.embedding <=> %s::vector,s.id LIMIT 5
+          JOIN corpora c ON c.version=s.corpus_version
+          WHERE s.corpus_version=%(corpus)s AND {ACCESS_SQL}
+            AND (%(classic)s OR s.request_types ? %(request)s)
+          ORDER BY s.embedding <=> %(vector)s::vector,s.id LIMIT 5
         """,
-            (vector, corpus_version(), settings().dialogue_mode == "classic", state.request_type, vector),
+            dict(
+                **access_params(),
+                vector=vector,
+                corpus=corpus_version(),
+                classic=settings().dialogue_mode == "classic",
+                request=state.request_type,
+            ),
         ).fetchall()
     return [row_guide(row) for row in rows]
 
 
-def load_guide(conn, source_id, *, version=None, section_id=None, workflow_version=None):
-    row = conn.execute(
-        """
-      SELECT s.*,a.title,a.category,a.source_url,a.is_synthetic
-      FROM sections s JOIN articles a ON a.id=s.article_id AND a.corpus_version=s.corpus_version
-      WHERE s.article_id=%s AND s.corpus_version=%s
-        AND (%s::text IS NULL OR s.id=%s)
-        AND (%s::text IS NULL OR s.workflow_version=%s)
-        AND (%s OR (a.allowed_visibility='private synthetic pilot' AND a.is_synthetic AND s.workflow_version IS NOT NULL))
-      ORDER BY s.chunk_index LIMIT 1
-    """,
-        (
-            source_id,
-            version or corpus_version(),
-            section_id,
-            section_id,
-            workflow_version,
-            workflow_version,
-            settings().app_mode != "pilot",
+def source_sections(conn, source_id, *, version=None, section_id=None, audiences=None):
+    return conn.execute(
+        f"""SELECT s.*,a.title,a.category,a.source_url,a.is_synthetic,a.audiences,a.content_owner,a.reviewed_at,a.review_due
+        FROM sections s JOIN articles a ON a.id=s.article_id AND a.corpus_version=s.corpus_version
+        JOIN corpora c ON c.version=s.corpus_version
+        WHERE s.article_id=%(source)s AND s.corpus_version=%(corpus)s
+          AND (%(section)s::text IS NULL OR s.id=%(section)s) AND {ACCESS_SQL}
+        ORDER BY s.chunk_index""",
+        dict(
+            **access_params(audiences),
+            source=source_id,
+            corpus=version or corpus_version(),
+            section=section_id,
         ),
-    ).fetchone()
+    ).fetchall()
+
+
+def load_guide(conn, source_id, *, version=None, section_id=None, workflow_version=None, audiences=None):
+    rows = source_sections(conn, source_id, version=version, section_id=section_id, audiences=audiences)
+    row = next((r for r in rows if not workflow_version or r["workflow_version"] == workflow_version), None)
     return row_guide(row) if row else None
 
 
@@ -169,4 +191,5 @@ def load_active(conn, state):
         version=state.active_corpus,
         section_id=state.active_section,
         workflow_version=state.active_workflow_version,
+        audiences=state.knowledge_audiences,
     )

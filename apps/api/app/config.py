@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     openrouter_model: str = "google/gemini-2.5-flash"
     external_call_limit: int = 15
     dialogue_mode: str = "conversational"
+    agent_mode: Literal["guided", "grounded"] = "guided"
+    approved_campus_corpus_version: str = ""
+    campus_source_hosts: list[str] = Field(default_factory=list)
     corpus_version: str = "synthetic-2026-10-v3"
     approved_external_corpus_version: str = ""
     admin_token: str = ""
@@ -52,6 +55,8 @@ class Settings(BaseSettings):
     firebase_project_id: str = ""
 
     def validate_pilot(self):
+        if self.agent_mode == "grounded" and self.dialogue_mode != "conversational":
+            raise ValueError("Grounded agent mode requires conversational dialogue")
         if self.app_mode != "pilot":
             return
         for value in (self.web_origin, self.oidc_issuer):

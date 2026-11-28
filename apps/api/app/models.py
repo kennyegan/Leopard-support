@@ -1,6 +1,6 @@
 from typing import Literal
 from uuid import UUID, uuid4
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 RequestType = Literal["troubleshoot", "install", "setup", "access", "how_to"]
 
@@ -77,6 +77,7 @@ class Interpretation(Strict):
 
 
 class State(Strict):
+    knowledge_audiences: list[str] = Field(default_factory=lambda: ["campus"], exclude=True)
     request_type: RequestType = "troubleshoot"
     active_guide: str | None = None
     active_corpus: str | None = None
@@ -147,6 +148,13 @@ class Intake(Strict):
 
 
 class Guide(Strict):
+    content_kind: Literal["procedure", "information"] = "procedure"
+    audiences: list[Literal["campus", "student", "staff"]] = Field(
+        default_factory=lambda: ["campus"], min_length=1
+    )
+    content_owner: str = ""
+    reviewed_at: str = ""
+    review_due: str = ""
     workflow_version: str | None = None
     intake: list[Intake] = Field(default_factory=list)
     routing: dict[str, list[str | None]] = Field(default_factory=dict)
@@ -162,9 +170,21 @@ class Guide(Strict):
     is_synthetic: bool = True
     heading: str
     section_text: str
-    steps: list[str] = Field(min_length=1, max_length=6)
+    steps: list[str] = Field(default_factory=list, max_length=6)
     applicability: dict[str, str]
     score: float = 0
+
+    @model_validator(mode="after")
+    def validate_content(self):
+        if self.content_kind == "procedure" and not self.steps:
+            raise ValueError("Procedures need reviewed steps")
+        if self.content_kind == "information" and (self.steps or self.workflow or self.workflow_version):
+            raise ValueError("Information sections contain prose, not procedural steps or workflows")
+        if not self.section_text.strip():
+            raise ValueError("Source text is required")
+        if set(self.applicability) - set(Details.model_fields):
+            raise ValueError("Unknown applicability field")
+        return self
 
 
 class Decision(Strict):

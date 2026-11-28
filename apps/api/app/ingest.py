@@ -1,9 +1,10 @@
-"""Explicit import path. No crawling. Synthetic-only anonymous MVP corpus."""
+"""Explicit reviewed import. Campus material requires a private, explicitly enabled corpus."""
 
 import csv
 import hashlib
 import json
 import re
+from datetime import date
 from urllib.parse import urlparse
 from html.parser import HTMLParser
 from pathlib import Path
@@ -71,6 +72,9 @@ def load(path: Path):
         sections = sections_from_html(path.read_text())
         steps_by_heading = guide.pop("steps_by_heading", {})
         for section in sections:
+            if guide.get("content_kind") == "information":
+                section.update(content_kind="information", steps=[])
+                continue
             if section["heading"] not in steps_by_heading:
                 raise ValueError("HTML import needs reviewed steps_by_heading metadata")
             section["steps"] = steps_by_heading[section["heading"]]
@@ -81,30 +85,68 @@ def load(path: Path):
     return metadata
 
 
-def ingest(path=None):
-    if path is None:
-        filename = {
-            "synthetic-2026-10-v1": "corpus.json",
-            "synthetic-2026-10-v2": "conversational.json",
-            "synthetic-2026-10-v3": "diagnostic.json",
-            "synthetic-2026-10-v4": "pilot.json",
-        }[settings().corpus_version]
-        path = ROOT / "fixtures/synthetic_guides" / filename
-    corpus = load(Path(path))
+def validate_corpus(corpus):
+    """Validate every section before migrations, embeddings or writes take place."""
+    cfg = settings()
     permission = corpus["permission"]
-    if permission.get("audience") not in {"local demo", "private synthetic pilot"} or not permission.get(
-        "approved_by"
+    campus = permission.get("audience") == "campus pilot"
+    if permission.get("audience") not in {
+        "local demo",
+        "private synthetic pilot",
+        "campus pilot",
+    } or not permission.get("approved_by"):
+        raise ValueError("Explicit source permission required")
+    if campus and (
+        cfg.app_mode != "pilot"
+        or cfg.agent_mode != "grounded"
+        or cfg.approved_campus_corpus_version != corpus["version"]
+        or not cfg.campus_source_hosts
+        or not permission.get("security_approved_by")
     ):
-        raise ValueError("Explicit local-demo permission required")
-    digest = hashlib.sha256(json.dumps(corpus, sort_keys=True).encode()).hexdigest()
+        raise ValueError(
+            "Campus import requires explicit corpus, host and security approval in grounded pilot mode"
+        )
+    if not re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", corpus["version"]):
+        raise ValueError("Invalid corpus version")
+    if not 1 <= len(corpus["guides"]) <= 1000:
+        raise ValueError("A reviewed corpus must contain 1–1000 articles")
     records = []
+    seen = set()
     for article in corpus["guides"]:
-        if not article.get("is_synthetic") or article["source_url"] != "demo://" + article["id"]:
+        if article["id"] in seen or not re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", article["id"]):
+            raise ValueError("Article IDs must be unique URL-safe identifiers")
+        seen.add(article["id"])
+        if not campus and (
+            not article.get("is_synthetic") or article["source_url"] != "demo://" + article["id"]
+        ):
             raise ValueError("This anonymous MVP import accepts synthetic local sources only")
+        if campus:
+            url = urlparse(article["source_url"])
+            if (
+                article.get("is_synthetic") is not False
+                or url.scheme != "https"
+                or url.hostname not in cfg.campus_source_hosts
+                or url.username
+                or url.password
+                or url.port not in (None, 443)
+                or url.fragment
+            ):
+                raise ValueError(
+                    "Campus sources need approved HTTPS hosts and an explicit nonsynthetic label"
+                )
+            if not article.get("content_owner") or not article.get("audiences"):
+                raise ValueError("Campus sources require an owner and explicit audiences")
+            reviewed = date.fromisoformat(article.get("reviewed_at", ""))
+            due = date.fromisoformat(article.get("review_due", ""))
+            if not reviewed <= date.today() <= due or due <= reviewed:
+                raise ValueError("Campus source review must be current with a later review deadline")
+        if not 1 <= len(article["sections"]) <= 100:
+            raise ValueError("An article must contain 1–100 reviewed sections")
         for index, section in enumerate(article["sections"]):
+            steps = section.get("steps", [])
             raw = (
                 section["text"]
-                + " ".join(section["steps"])
+                + " ".join(steps)
                 + json.dumps(
                     {"workflow": section.get("workflow", []), "intake": article.get("intake", [])},
                     ensure_ascii=False,
@@ -121,9 +163,15 @@ def ingest(path=None):
                 category=article["category"],
                 source_url=article["source_url"],
                 corpus_version=corpus["version"],
+                is_synthetic=article["is_synthetic"],
+                content_kind=section.get("content_kind", article.get("content_kind", "procedure")),
+                audiences=article.get("audiences", ["campus"]),
+                content_owner=article.get("content_owner", ""),
+                reviewed_at=article.get("reviewed_at", ""),
+                review_due=article.get("review_due", ""),
                 heading=section["heading"],
                 section_text=section["text"],
-                steps=section["steps"],
+                steps=steps,
                 applicability=article["applicability"],
                 request_types=article.get("request_types", ["troubleshoot"]),
                 references=article.get("references", []),
@@ -133,13 +181,28 @@ def ingest(path=None):
                 routing=article.get("routing", {}),
             )
             validate_graph(g)
-            if permission["audience"] == "private synthetic pilot" and not g.workflow_version:
+            if campus and g.workflow and not g.workflow_version:
+                raise ValueError("Campus diagnostic workflows require a versioned validated graph")
+            if (
+                permission["audience"] == "private synthetic pilot"
+                and not g.workflow_version
+                and cfg.agent_mode != "grounded"
+            ):
                 raise ValueError("Pilot sources require a validated diagnostic graph")
+            if len(raw) > 12000:
+                raise ValueError(
+                    "Split large source sections into reviewed sections of at most 12000 characters"
+                )
             for ref in g.references:
                 url = urlparse(ref.url)
                 if (
                     url.scheme != "https"
-                    or url.hostname not in {"www.autodesk.com", "manage.autodesk.com", "help.autodesk.com"}
+                    or url.hostname
+                    not in (
+                        set(cfg.campus_source_hosts)
+                        if campus
+                        else {"www.autodesk.com", "manage.autodesk.com", "help.autodesk.com"}
+                    )
                     or url.username
                     or url.password
                 ):
@@ -147,6 +210,23 @@ def ingest(path=None):
             if any(i < 0 or i >= len(g.steps) for w in g.workflow for i in w.indexes):
                 raise ValueError("Workflow references nonexistent source steps")
             records.append((g, index))
+    return records
+
+
+def ingest(path=None):
+    if path is None:
+        filename = {
+            "synthetic-2026-10-v1": "corpus.json",
+            "synthetic-2026-10-v2": "conversational.json",
+            "synthetic-2026-10-v3": "diagnostic.json",
+            "synthetic-2026-10-v4": "pilot.json",
+            "synthetic-campus-flow-v1": "campus_flow.json",
+        }[settings().corpus_version]
+        path = ROOT / "fixtures/synthetic_guides" / filename
+    corpus = load(Path(path))
+    records = validate_corpus(corpus)
+    permission = corpus["permission"]
+    digest = hashlib.sha256(json.dumps(corpus, sort_keys=True).encode()).hexdigest()
     migrate()
     with connection() as conn:
         old = conn.execute(
@@ -168,21 +248,26 @@ def ingest(path=None):
         for (g, index), vector in zip(records, vectors, strict=True):
             content_hash = hashlib.sha256(g.model_dump_json().encode()).hexdigest()
             conn.execute(
-                """INSERT INTO articles(id,corpus_version,title,category,source_url,is_synthetic,allowed_visibility,content_hash)
-              VALUES(%s,%s,%s,%s,%s,true,%s,%s) ON CONFLICT DO NOTHING""",
+                """INSERT INTO articles(id,corpus_version,title,category,source_url,is_synthetic,allowed_visibility,content_hash,audiences,content_owner,reviewed_at,review_due)
+              VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING""",
                 (
                     g.source_id,
                     g.corpus_version,
                     g.title,
                     g.category,
                     g.source_url,
+                    g.is_synthetic,
                     permission["audience"],
                     content_hash,
+                    Jsonb(g.audiences),
+                    g.content_owner,
+                    g.reviewed_at or None,
+                    g.review_due or None,
                 ),
             )
             conn.execute(
-                """INSERT INTO sections(id,corpus_version,article_id,heading,section_text,steps,embedding,applicability,chunk_index,content_hash,request_types,reference_links,workflow,workflow_version,intake,routing)
-              VALUES(%s,%s,%s,%s,%s,%s,%s::vector,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                """INSERT INTO sections(id,corpus_version,article_id,heading,section_text,steps,embedding,applicability,chunk_index,content_hash,request_types,reference_links,workflow,workflow_version,intake,routing,content_kind)
+              VALUES(%s,%s,%s,%s,%s,%s,%s::vector,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                 (
                     g.id,
                     g.corpus_version,
@@ -200,6 +285,7 @@ def ingest(path=None):
                     g.workflow_version,
                     Jsonb([q.model_dump() for q in g.intake]),
                     Jsonb(g.routing),
+                    g.content_kind,
                 ),
             )
     return {

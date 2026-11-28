@@ -11,6 +11,8 @@ from fastapi.responses import JSONResponse
 from psycopg import OperationalError
 from psycopg_pool import PoolTimeout, TooManyRequests
 from psycopg.types.json import Jsonb
+from .knowledge import ACCESS_SQL, access_params, audiences_for
+from .retrieval import source_sections
 from .config import settings, build_revision
 from .db import connection, close_pools, migrate
 from .llm import ProviderError, provider_configured
@@ -125,6 +127,10 @@ def get_session(conn, id, lock=False, user=None):
 def health():
     with connection() as conn:
         count = corpus_sections(conn)
+        synthetic = not conn.execute(
+            "SELECT 1 FROM articles WHERE corpus_version=%s AND NOT is_synthetic LIMIT 1",
+            (corpus_version(),),
+        ).fetchone()
         remaining = None
         if settings().provider != "scripted":
             usage = conn.execute(
@@ -139,7 +145,7 @@ def health():
                 remaining = min(
                     remaining, max(0, int((usage["budget_usd"] - usage["reserved_usd"]) / Decimal("0.033")))
                 )
-    ready = count >= 12 and provider_configured()
+    ready = count >= (1 if settings().agent_mode == "grounded" else 12) and provider_configured()
     return JSONResponse(
         dict(
             app_mode=settings().app_mode,
@@ -153,7 +159,8 @@ def health():
             sections=count,
             provider=settings().provider,
             external_ai_enabled=settings().allow_external_ai,
-            synthetic=True,
+            synthetic=synthetic,
+            agent_mode=settings().agent_mode,
             corpus_version=corpus_version(),
             dialogue_mode=settings().dialogue_mode,
         ),
@@ -171,7 +178,7 @@ def ready():
     with connection() as conn:
         conn.execute("SELECT 1 FROM pilot_turns LIMIT 1")
         count = corpus_sections(conn)
-    ok = count >= 12 and provider_configured()
+    ok = count >= (1 if settings().agent_mode == "grounded" else 12) and provider_configured()
     return JSONResponse(
         {
             "ready": ok,
@@ -385,17 +392,27 @@ def edit_ticket(id: UUID, body: TicketIn, user=Depends(principal)):
 @app.get("/api/guides/{id}")
 def guide(id: str, version: str | None = None, section: str | None = None, user=Depends(principal)):
     with connection() as conn:
-        rows = conn.execute(
-            """SELECT a.id,a.title,a.source_url,a.is_synthetic,a.corpus_version,s.heading,s.section_text,s.steps,s.applicability,s.reference_links,s.request_types
-          FROM articles a JOIN sections s ON a.id=s.article_id AND a.corpus_version=s.corpus_version
-          WHERE a.id=%s AND a.corpus_version=%s AND (%s::text IS NULL OR s.id=%s)
-            AND (%s OR (a.allowed_visibility='private synthetic pilot' AND a.is_synthetic))
-          ORDER BY s.chunk_index""",
-            (id, version or corpus_version(), section, section, settings().app_mode != "pilot"),
-        ).fetchall()
+        rows = source_sections(conn, id, version=version, section_id=section, audiences=audiences_for(user))
         if not rows:
             raise HTTPException(404, "Guide not found")
-        return rows
+        # Do not expose embedding vectors or internal import data through the viewer.
+        fields = (
+            "title",
+            "source_url",
+            "is_synthetic",
+            "corpus_version",
+            "heading",
+            "section_text",
+            "steps",
+            "applicability",
+            "reference_links",
+            "request_types",
+            "content_kind",
+            "content_owner",
+            "reviewed_at",
+            "review_due",
+        )
+        return [{"id": row["article_id"], **{key: row[key] for key in fields}} for row in rows]
 
 
 @app.get("/api/admin/stats")
@@ -471,9 +488,9 @@ def operations(user=Depends(principal)):
 
 def corpus_sections(conn):
     return conn.execute(
-        """SELECT count(*) AS n FROM sections s
+        f"""SELECT count(*) AS n FROM sections s
       JOIN articles a ON a.id=s.article_id AND a.corpus_version=s.corpus_version
-      WHERE s.corpus_version=%s AND (%s OR (a.allowed_visibility='private synthetic pilot'
-      AND a.is_synthetic AND s.workflow_version IS NOT NULL))""",
-        (corpus_version(), settings().app_mode != "pilot"),
+      JOIN corpora c ON c.version=s.corpus_version
+      WHERE s.corpus_version=%(corpus)s AND {ACCESS_SQL}""",
+        dict(**access_params(["campus", "student", "staff"]), corpus=corpus_version()),
     ).fetchone()["n"]

@@ -1,6 +1,7 @@
 """Explicit owner-only release job: migration, immutable corpus, runtime grants."""
 
 import os
+import argparse
 from psycopg import sql
 from .db import connection, migrate
 from .ingest import ingest
@@ -34,10 +35,15 @@ def grant_runtime(password):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Migrate and import a reviewed pilot corpus")
+    parser.add_argument(
+        "--corpus", help="Explicit reviewed corpus file; defaults to the configured synthetic fixture"
+    )
+    args = parser.parse_args()
     if settings().app_mode != "pilot":
         raise ValueError("Explicit pilot operator configuration is required")
     migrate()
-    result = ingest()
+    result = ingest(args.corpus)
     grant_runtime(os.environ.get("RUNTIME_DB_PASSWORD", ""))
     print({"release": "migrated_and_ingested", "corpus": result})
 
