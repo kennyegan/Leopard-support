@@ -50,9 +50,7 @@ def establish_login(claims, old_token=""):
         raise HTTPException(403, "Verified invited identity required")
     token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
     with connection() as conn:
-        invite = conn.execute(
-            "SELECT * FROM lock_pilot_invitation(%s)", (email,)
-        ).fetchone()
+        invite = conn.execute("SELECT * FROM lock_pilot_invitation(%s)", (email,)).fetchone()
         if not invite:
             raise HTTPException(403, "This account is not invited to the pilot")
         user = conn.execute("SELECT * FROM pilot_users WHERE email=%s", (email,)).fetchone()
@@ -79,7 +77,7 @@ def authenticate(request):
         raise HTTPException(401, "Sign in to the private pilot")
     with connection() as conn:
         user = conn.execute(
-            """SELECT u.id,i.role,l.csrf_token FROM pilot_logins l
+            """SELECT u.id,i.role,i.knowledge_audiences,l.csrf_token FROM pilot_logins l
             JOIN pilot_users u ON u.id=l.user_id JOIN pilot_invites i ON i.email=u.email
             WHERE l.token_hash=%s AND l.expires_at>now() AND i.active""",
             (digest(token),),
@@ -162,12 +160,17 @@ async def callback(request: Request):
 def me(request: Request):
     user = principal(request)
     if settings().app_mode == "demo":
-        return {"mode": "demo", "authenticated": user is not None, "accounts": bool(settings().firebase_project_id)}
+        return {
+            "mode": "demo",
+            "authenticated": user is not None,
+            "accounts": bool(settings().firebase_project_id),
+        }
     return {
         "mode": "pilot",
         "authenticated": True,
         "user_id": str(user["id"]),
         "role": user["role"],
+        "knowledge_audiences": user["knowledge_audiences"],
         "csrf_token": user["csrf_token"],
     }
 

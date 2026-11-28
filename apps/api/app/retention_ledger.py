@@ -8,6 +8,7 @@ import argparse
 from datetime import datetime
 import json
 from pathlib import Path
+from psycopg.types.json import Jsonb
 from .config import settings
 from .db import connection
 
@@ -20,12 +21,22 @@ def export(path):
             "SELECT object_id,actor_id,created_at FROM pilot_audit WHERE event='conversation_deleted' AND created_at>now()-interval '90 days' ORDER BY created_at"
         ).fetchall()
         usage = conn.execute("SELECT * FROM provider_usage WHERE id=1").fetchone()
-        invitations = conn.execute("SELECT email,role,active FROM pilot_invites ORDER BY email").fetchall()
+        invitations = conn.execute(
+            "SELECT email,role,active,knowledge_audiences FROM pilot_invites ORDER BY email"
+        ).fetchall()
+        withdrawn_corpora = conn.execute(
+            "SELECT version FROM corpora WHERE withdrawn_at IS NOT NULL"
+        ).fetchall()
+        withdrawn_articles = conn.execute(
+            "SELECT id,corpus_version FROM articles WHERE withdrawn_at IS NOT NULL"
+        ).fetchall()
     document = dict(
-        version=2,
+        version=3,
         exported_at=watermark.isoformat(),
         provider_usage={k: str(v) for k, v in usage.items()},
         invitations=invitations,
+        withdrawn_corpora=withdrawn_corpora,
+        withdrawn_articles=withdrawn_articles,
         deletions=[
             dict(
                 session_id=str(r["object_id"]),
@@ -43,11 +54,11 @@ def export(path):
 
 def reconcile(path, backup_created_at):
     document = json.loads(Path(path).read_text())
-    if document["version"] != 2 or datetime.fromisoformat(document["exported_at"]) <= datetime.fromisoformat(
+    if document["version"] != 3 or datetime.fromisoformat(document["exported_at"]) <= datetime.fromisoformat(
         backup_created_at
     ):
         raise ValueError(
-            "A current version-2 recovery ledger newer than the backup is required; keep restored service inaccessible"
+            "A current version-3 recovery ledger newer than the backup is required; keep restored service inaccessible"
         )
     deleted = 0
     with connection() as conn:
@@ -68,12 +79,22 @@ def reconcile(path, backup_created_at):
             ),
         )
         # Stale backups must not re-enable revoked invitations or old roles.
-        conn.execute("UPDATE pilot_invites SET active=false")
+        conn.execute("UPDATE pilot_invites SET active=false,knowledge_audiences='[\"campus\"]'")
         for invite in document["invitations"]:
             conn.execute(
-                """INSERT INTO pilot_invites(email,role,active) VALUES(%s,%s,%s)
-                ON CONFLICT(email) DO UPDATE SET role=EXCLUDED.role,active=EXCLUDED.active""",
-                (invite["email"], invite["role"], invite["active"]),
+                """INSERT INTO pilot_invites(email,role,active,knowledge_audiences) VALUES(%s,%s,%s,%s)
+                ON CONFLICT(email) DO UPDATE SET role=EXCLUDED.role,active=EXCLUDED.active,knowledge_audiences=EXCLUDED.knowledge_audiences""",
+                (invite["email"], invite["role"], invite["active"], Jsonb(invite["knowledge_audiences"])),
+            )
+        for corpus in document["withdrawn_corpora"]:
+            conn.execute(
+                "UPDATE corpora SET withdrawn_at=COALESCE(withdrawn_at,now()) WHERE version=%s",
+                (corpus["version"],),
+            )
+        for article in document["withdrawn_articles"]:
+            conn.execute(
+                "UPDATE articles SET withdrawn_at=COALESCE(withdrawn_at,now()) WHERE id=%s AND corpus_version=%s",
+                (article["id"], article["corpus_version"]),
             )
         for row in document["deletions"]:
             result = conn.execute(
